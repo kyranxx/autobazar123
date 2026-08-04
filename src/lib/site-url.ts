@@ -12,12 +12,3 @@ export function getBaseUrl(): string {
       || BRAND_URL,
   );
 }
-
-export function toAbsoluteUrl(pathOrUrl: string): string {
-  if (/^https?:\/\//i.test(pathOrUrl)) {
-    return pathOrUrl;
-  }
-
-  const normalizedPath = pathOrUrl.startsWith("/") ? pathOrUrl : `/${pathOrUrl}`;
-  return `${getBaseUrl()}${normalizedPath}`;
-}

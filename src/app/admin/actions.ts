@@ -10,11 +10,6 @@ import {
   type ProcessedCheckoutLog,
 } from "@/lib/admin/revenue";
 import {
-  buildSloDashboardSnapshot,
-  toWebVitalSample,
-  type SloMetricRow,
-} from "@/lib/performance/slo";
-import {
   renderInvoiceEmail,
   renderModerationDecisionEmail,
   renderPasswordResetEmail,
@@ -334,7 +329,7 @@ export interface AdminNotification {
   kind: string;
   level: "info" | "warn" | "error" | "critical";
   category: string;
-  source: "fallback" | "quality_gate" | "system";
+  source: "system";
   title: string;
   description: string;
   createdAt: string;
@@ -368,14 +363,6 @@ type BillingTransactionRow = {
   created_at?: string | null;
   transaction_kind?: string | null;
 };
-
-export interface PerformanceSloDashboard {
-  windowHours: number;
-  totalSamples: number;
-  routeCount: number;
-  lastIngestedAt: string | null;
-  rows: SloMetricRow[];
-}
 
 export interface FounderDashboardSummary {
   windowDays: number;
@@ -3099,31 +3086,6 @@ export async function reviewDealerVerificationRequest(
   return { success: true };
 }
 
-export async function getRecentActivity() {
-  const { supabase } = await requireAuth();
-  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-
-  const [{ data: recentAds }, { data: recentUsers }] = await Promise.all([
-    supabase
-      .from("ads")
-      .select("id, created_at, status, profiles:seller_id (email)")
-      .gte("created_at", fiveMinutesAgo)
-      .order("created_at", { ascending: false })
-      .limit(10),
-    supabase
-      .from("profiles")
-      .select("id, email, created_at")
-      .gte("created_at", fiveMinutesAgo)
-      .order("created_at", { ascending: false })
-      .limit(10),
-  ]);
-
-  return {
-    recentAds: recentAds || [],
-    recentUsers: recentUsers || [],
-  };
-}
-
 function normalizeNotificationLevel(value: string | null | undefined): AdminNotification["level"] {
   if (value === "info" || value === "warn" || value === "error" || value === "critical") {
     return value;
@@ -3146,76 +3108,6 @@ function mapSystemLogToNotification(log: {
 }): AdminNotification {
   const metadata = toMetadataRecord(log.metadata);
   const level = normalizeNotificationLevel(log.level);
-
-  if (log.message === "fallback_activated") {
-    const fallbackKey =
-      typeof metadata?.fallbackKey === "string" ? metadata.fallbackKey : "unknown";
-    const summary =
-      typeof metadata?.summary === "string"
-        ? metadata.summary
-        : "Fallback path activated.";
-    return {
-      id: log.id,
-      kind: log.message,
-      level,
-      category: log.category,
-      source: "fallback",
-      title: `Fallback activated: ${fallbackKey}`,
-      description: summary,
-      createdAt: log.created_at,
-      requestId: log.request_id,
-    };
-  }
-
-  if (log.message === "fallback_threshold_crossed") {
-    const fallbackKey =
-      typeof metadata?.fallbackKey === "string" ? metadata.fallbackKey : "unknown";
-    const observedCount =
-      typeof metadata?.observedCount === "number" ? metadata.observedCount : null;
-    const thresholdCount =
-      typeof metadata?.thresholdCount === "number" ? metadata.thresholdCount : null;
-    const windowMinutes =
-      typeof metadata?.thresholdWindowMinutes === "number"
-        ? metadata.thresholdWindowMinutes
-        : null;
-    const summary =
-      observedCount !== null && thresholdCount !== null && windowMinutes !== null
-        ? `${observedCount} activations in ${windowMinutes}m window (threshold ${thresholdCount}).`
-        : "Fallback threshold crossed.";
-
-    return {
-      id: log.id,
-      kind: log.message,
-      level,
-      category: log.category,
-      source: "fallback",
-      title: `Fallback threshold crossed: ${fallbackKey}`,
-      description: summary,
-      createdAt: log.created_at,
-      requestId: log.request_id,
-    };
-  }
-
-  if (log.message === "quality_gate_failure" || log.message === "quality_gate_recovered") {
-    const workflowFile =
-      typeof metadata?.workflowFile === "string" ? metadata.workflowFile : "unknown";
-    const conclusion =
-      typeof metadata?.conclusion === "string" ? metadata.conclusion : "unknown";
-    const stateLabel =
-      log.message === "quality_gate_failure" ? "Quality gate failure" : "Quality gate recovered";
-
-    return {
-      id: log.id,
-      kind: log.message,
-      level,
-      category: log.category,
-      source: "quality_gate",
-      title: `${stateLabel}: ${workflowFile}`,
-      description: `Conclusion: ${conclusion}`,
-      createdAt: log.created_at,
-      requestId: log.request_id,
-    };
-  }
 
   return {
     id: log.id,
@@ -3323,10 +3215,6 @@ export async function getAdminNotifications(limit = 80): Promise<AdminNotificati
     ...rows
       .filter((row) => {
         return (
-          row.message === "fallback_activated" ||
-          row.message === "fallback_threshold_crossed" ||
-          row.message === "quality_gate_failure" ||
-          row.message === "quality_gate_recovered" ||
           row.level === "warn" ||
           row.level === "error" ||
           row.level === "critical"
@@ -3347,51 +3235,6 @@ export async function getAdminNotifications(limit = 80): Promise<AdminNotificati
         new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
     )
     .slice(0, 40);
-}
-
-export async function getPerformanceSloDashboard(
-  windowHours = 24,
-): Promise<PerformanceSloDashboard> {
-  const { supabase } = await requireAuth();
-  const safeWindowHours = Number.isFinite(windowHours)
-    ? Math.max(1, Math.min(Math.round(windowHours), 168))
-    : 24;
-
-  const since = new Date(Date.now() - safeWindowHours * 60 * 60 * 1000).toISOString();
-
-  const { data, error } = await supabase
-    .from("system_logs")
-    .select("metadata, created_at")
-    .eq("message", "web_vital")
-    .gte("created_at", since)
-    .order("created_at", { ascending: false })
-    .limit(5000);
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  const samples = ((data as { metadata: Record<string, unknown> | null; created_at: string }[] | null) || [])
-    .map((row) => toWebVitalSample(row.metadata, row.created_at))
-    .filter((sample): sample is NonNullable<typeof sample> => !!sample);
-
-  const snapshot = buildSloDashboardSnapshot(samples);
-
-  return {
-    windowHours: safeWindowHours,
-    totalSamples: snapshot.totalSamples,
-    routeCount: snapshot.routeCount,
-    lastIngestedAt: samples[0]?.timestamp || null,
-    rows: snapshot.rows
-      .sort((a, b) => {
-        if (a.sampleCount === b.sampleCount) {
-          if (a.route === b.route) return a.metricName.localeCompare(b.metricName);
-          return a.route.localeCompare(b.route);
-        }
-        return b.sampleCount - a.sampleCount;
-      })
-      .slice(0, 60),
-  };
 }
 
 const EMAIL_SORT_FIELDS = ["created_at", "email_type", "status"] as const;

@@ -1,7 +1,6 @@
 import {
   getMarketConfig,
   isMarketCode,
-  MARKET_DEFINITIONS,
   resolveKnownMarketCodeFromHost,
   type MarketCode,
 } from "@/config/markets";
@@ -64,8 +63,3 @@ export function resolveRequestLocaleSettings({
     timeZone,
   };
 }
-
-// Keeps the public i18n catalog and the market registry synchronized.
-export const MARKET_LOCALE_CONTRACT = MARKET_DEFINITIONS.map(
-  (market) => market.locale,
-) satisfies readonly Locale[];

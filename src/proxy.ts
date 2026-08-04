@@ -17,7 +17,6 @@ import {
 } from "@/lib/security/maintenance-bypass";
 import { buildCspHeader } from "@/lib/security/csp";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
-import type { FallbackKey } from "@/lib/fallbacks/registry";
 import {
   CSRF_TOKEN_COOKIE_NAME,
   generateCsrfToken,
@@ -64,24 +63,6 @@ const maintenanceCache: {
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function emitProxyFallbackEvent(
-  key: FallbackKey,
-  summary: string,
-  metadata?: Record<string, unknown>,
-) {
-  void import("@/lib/fallbacks/monitor")
-    .then(({ recordFallbackActivation }) =>
-      recordFallbackActivation({
-        key,
-        summary,
-        metadata,
-        destination: "runtime_log",
-      }))
-    .catch((error) => {
-      console.error("Proxy fallback monitoring import failed", error);
-    });
 }
 
 async function withTimeout<T>(
@@ -144,16 +125,7 @@ async function getMaintenanceModeCached(
       })(),
       MAINTENANCE_QUERY_TIMEOUT_MS,
       false,
-      () => {
-        abortController.abort();
-        emitProxyFallbackEvent(
-          "proxy.maintenance_query_timeout_fallback",
-          "Maintenance-mode query timed out and fell back to fail-open value.",
-          {
-            timeoutMs: MAINTENANCE_QUERY_TIMEOUT_MS,
-          },
-        );
-      },
+      () => abortController.abort(),
     );
 
     maintenanceCache.value = enabled;
@@ -388,15 +360,7 @@ export async function proxy(request: NextRequest) {
         })(),
         AUTH_GET_CLAIMS_TIMEOUT_MS,
         null,
-        () =>
-          emitProxyFallbackEvent(
-            "proxy.auth_get_user_timeout_fallback",
-            "Proxy auth claims verification timed out and fell back to unauthenticated state.",
-            {
-              timeoutMs: AUTH_GET_CLAIMS_TIMEOUT_MS,
-              pathname,
-            },
-          ),
+        undefined,
       );
       userId = typeof fetchedUser?.sub === "string" ? fetchedUser.sub : null;
     } catch {

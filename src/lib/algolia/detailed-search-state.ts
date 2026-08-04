@@ -26,28 +26,6 @@ export type DetailedSearchState = {
   vatDeductible: boolean;
 };
 
-export const EMPTY_DETAILED_SEARCH_STATE: DetailedSearchState = {
-  q: "",
-  brands: [],
-  model: "",
-  fuels: [],
-  bodyStyles: [],
-  transmissions: [],
-  locations: [],
-  priceFrom: "",
-  priceTo: "",
-  mileageFrom: "",
-  mileageTo: "",
-  yearFrom: "",
-  yearTo: "",
-  powerFrom: "",
-  powerTo: "",
-  hasServiceBook: false,
-  notCrashed: false,
-  boughtInSk: false,
-  vatDeductible: false,
-};
-
 function getRangePair(
   range: Record<string, string> | undefined,
   attribute: string,

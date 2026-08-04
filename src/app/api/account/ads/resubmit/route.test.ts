@@ -63,31 +63,29 @@ describe("POST /api/account/ads/resubmit", () => {
     updateEqMock.mockResolvedValue({ error: null });
     rpcMock.mockResolvedValue({ data: false, error: null });
 
+    const selectQuery = {
+      eq: () => selectQuery,
+      maybeSingle: () => adMaybeSingleMock(),
+    };
+    const updateQuery = {
+      eq: () => updateQuery,
+      then: (resolve: (value: { error: null }) => unknown) =>
+        Promise.resolve(updateEqMock()).then(resolve),
+    };
+
     createClientMock.mockResolvedValue({
       auth: {
         getUser: (...args: unknown[]) => getUserMock(...args),
       },
       rpc: (...args: unknown[]) => rpcMock(...args),
       from: () => ({
-        select: () => ({
-          eq: () => ({
-            maybeSingle: () => adMaybeSingleMock(),
-          }),
-        }),
-        update: () => ({
-          eq: () => ({
-            eq: () => updateEqMock(),
-          }),
-        }),
+        select: () => selectQuery,
+        update: () => updateQuery,
       }),
     });
     createAdminClientMock.mockReturnValue({
       from: () => ({
-        update: () => ({
-          eq: () => ({
-            eq: () => updateEqMock(),
-          }),
-        }),
+        update: () => updateQuery,
       }),
     });
   });

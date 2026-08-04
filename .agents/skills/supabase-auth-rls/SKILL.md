@@ -19,7 +19,7 @@ Use when a request includes:
 
 ## Workflow
 
-1. read `AGENTS.md` and `docs/PROJECT_PLAYBOOK.md` first.
+1. read `AGENTS.md` first.
 2. identify every data access path touched and map auth checks from UI to DB boundary.
 3. verify server routes and actions enforce identity and role checks directly, not only UI visibility.
 4. update RLS policies or functions in same pass as API logic changes when required.
@@ -39,4 +39,3 @@ Use when a request includes:
 - `docs/security-top-10-defaults.md`
 - `AGENTS.md`
 - `supabase` policy/migration files
-

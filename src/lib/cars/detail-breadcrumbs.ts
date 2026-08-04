@@ -45,7 +45,7 @@ function formatEngineLiters(engineVolumeCm3: number) {
   return `${(engineVolumeCm3 / 1000).toFixed(1)}`;
 }
 
-export function buildCarDetailBreadcrumbTitle(
+function buildCarDetailBreadcrumbTitle(
   car: CarData,
   { marketCode = "SK" }: Pick<CarDetailBreadcrumbOptions, "marketCode"> = {},
 ) {

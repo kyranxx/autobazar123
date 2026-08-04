@@ -20,7 +20,7 @@ Use this skill when a request touches:
 
 ## Required Check Flow
 
-1. read `AGENTS.md` and `docs/PROJECT_PLAYBOOK.md` first.
+1. read `AGENTS.md` first.
 2. map the exact touch points in:
    - search page clients and URL state sync layers
    - Algolia query/route wiring
@@ -40,7 +40,6 @@ Use this skill when a request touches:
 
 ## Documentation and Source of Truth
 
-- `docs/PROJECT_PLAYBOOK.md`
 - `docs/seo-implementation-matrix.md`
 - `docs/links-ingestion.md`
 - `package.json`
@@ -50,4 +49,3 @@ Use this skill when a request touches:
 - preserve query-state compatibility for existing backlinks
 - prefer deterministic rendering paths over dynamic fixes that reduce cacheability
 - avoid adding client-only randomness or time reads in SEO routes
-

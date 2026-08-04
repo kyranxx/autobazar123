@@ -5,7 +5,6 @@ import {
   rejectWhenInvalidCronRequest,
   revalidateAdsCacheTags,
 } from "@/lib/cron/route-helpers";
-import { recordFallbackActivation } from "@/lib/fallbacks/monitor";
 import { isExpectedPrerenderBailout } from "@/lib/next/prerender-bailout";
 
 function chunkArray<T>(items: T[], size: number): T[][] {
@@ -235,15 +234,6 @@ export async function GET(request: NextRequest) {
               code: "algolia_cleanup_failed",
               summary: "Algolia stale ad cleanup failed",
             });
-            await recordFallbackActivation({
-              key: "cron.expire_ads_algolia_cleanup_failed",
-              summary: "Algolia stale ad cleanup failed during expire-ads cron.",
-              error: algoliaError,
-              metadata: {
-                indexName: carsIndexName,
-                staleAdCount: staleIds.length,
-              },
-            });
           }
         }
       }
@@ -252,11 +242,6 @@ export async function GET(request: NextRequest) {
       failures.push({
         code: "algolia_cleanup_failed",
         summary: "Algolia stale ad cleanup failed",
-      });
-      await recordFallbackActivation({
-        key: "cron.expire_ads_algolia_cleanup_failed",
-        summary: "Algolia stale ad cleanup failed during expire-ads cron.",
-        error: algoliaError,
       });
     }
 

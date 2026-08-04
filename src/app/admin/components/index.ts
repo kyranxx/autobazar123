@@ -1,12 +1,8 @@
 export { AdminToday } from "./AdminToday";
 export { AdminAds } from "./AdminAds";
-export { AdminModeration } from "./AdminModeration";
 export { AdminUsers } from "./AdminUsers";
 export { AdminRevenue } from "./AdminRevenue";
 export { AdminSettings } from "./AdminSettings";
-export { AdminLogs } from "./AdminLogs";
-export { AdminFeatureFlags } from "./AdminFeatureFlags";
 export { AdminEmails } from "./AdminEmails";
-export { AdminQualityGates } from "./AdminQualityGates";
 export { AdminAnalytics } from "./AdminAnalytics";
 export { AdminTechnical } from "./AdminTechnical";

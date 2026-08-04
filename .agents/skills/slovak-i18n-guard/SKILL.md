@@ -19,7 +19,7 @@ Use when a request includes:
 
 ## Required Workflow
 
-1. read `AGENTS.md` fallback and quality sections plus `docs/PROJECT_PLAYBOOK.md`.
+1. read `AGENTS.md` first.
 2. inspect changed copy and locate generated/static locale sources.
 3. validate both:
    - `check:i18n-contract`
@@ -37,7 +37,5 @@ Use when a request includes:
 
 ## Required References
 
-- `docs/PROJECT_PLAYBOOK.md`
 - `package.json` command entries for verification
 - any locale contract files under `src`
-

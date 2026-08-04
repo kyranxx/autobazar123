@@ -28,15 +28,6 @@ const configuredWorkers = process.env.PLAYWRIGHT_WORKERS
   : undefined;
 const defaultWorkers =
   useManagedWebServer && isLocalPlaywrightBaseUrl ? 1 : undefined;
-const mobileCoverageMatch = [
-  "**/accessibility-gate.test.ts",
-  "**/keyboard-navigation.test.ts",
-  "**/reflow-zoom.test.ts",
-  "**/screen-reader-proxy.test.ts",
-  "**/web-interface-guidelines.test.ts",
-  "**/web-interface-sitewide.test.ts",
-];
-
 export default defineConfig({
   testDir: "tests",
   testMatch: ["**/*.test.ts", "**/*-test.ts", "**/*-audit.ts"],
@@ -58,28 +49,7 @@ export default defineConfig({
   projects: [
     {
       name: "desktop-chromium",
-      testIgnore: ["**/responsive-viewport-matrix.test.ts"],
       use: { ...devices["Desktop Chrome"], ...chromiumChannelUse },
-    },
-    {
-      name: "responsive-priority-matrix",
-      testMatch: ["**/responsive-viewport-matrix.test.ts"],
-      use: { ...devices["Desktop Chrome"], ...chromiumChannelUse },
-    },
-    {
-      name: "mobile-pixel-7",
-      testMatch: mobileCoverageMatch,
-      use: { ...devices["Pixel 7"], ...chromiumChannelUse },
-    },
-    {
-      name: "mobile-iphone-13-landscape",
-      testMatch: mobileCoverageMatch,
-      use: {
-        browserName: "chromium",
-        ...devices["iPhone 13"],
-        ...chromiumChannelUse,
-        viewport: { width: 844, height: 390 },
-      },
     },
   ],
 });

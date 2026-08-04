@@ -114,27 +114,6 @@ function mapDealerSummary(
   };
 }
 
-export const getVerifiedDealerSlugs = cache(async (): Promise<string[]> => {
-  const supabase = getPublicDealerDataClient();
-  if (!supabase) {
-    return [];
-  }
-
-  const { data, error } = await supabase
-    .from("dealers")
-    .select("slug")
-    .eq("is_verified", true)
-    .order("created_at", { ascending: true });
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return ((data as Array<{ slug?: string | null }> | null) || [])
-    .map((row) => row.slug?.trim() || "")
-    .filter((slug) => slug.length > 0);
-});
-
 export const getVerifiedDealerSummaries = cache(async (marketCode: MarketCode): Promise<PublicDealerSummary[]> => {
   const supabase = getPublicDealerDataClient();
   if (!supabase) {

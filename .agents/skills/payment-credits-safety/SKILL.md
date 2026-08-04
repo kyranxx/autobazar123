@@ -20,7 +20,7 @@ Use when a request includes:
 
 ## Required Sequence
 
-1. read `AGENTS.md` security sections and `docs/PROJECT_PLAYBOOK.md` first.
+1. read `AGENTS.md` first.
 2. confirm the endpoint is server-side where trust decisions happen.
 3. validate webhook signature verification paths are unchanged or intentionally hardened.
 4. ensure every payment-triggered state change is idempotent and cannot be replayed into duplicate credits.

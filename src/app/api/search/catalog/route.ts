@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAnonClient } from "@/lib/supabase/anon";
 import { transformCarToAlgoliaRecord } from "@/lib/algolia";
 import { resolveMarketCodeFromHost } from "@/config/markets";
-import { recordFallbackActivation } from "@/lib/fallbacks/monitor";
-import type { FallbackKey } from "@/lib/fallbacks/registry";
 import { isExpectedPrerenderBailout } from "@/lib/next/prerender-bailout";
 
 interface SupabaseAd {
@@ -34,27 +32,8 @@ interface SupabaseAd {
 }
 
 const PAGE_SIZE = 1000;
-const SEARCH_FALLBACK_REASONS = new Set<FallbackKey>([
-  "search.algolia_missing_keys",
-  "search.algolia_unavailable",
-]);
-
 export async function GET(request: NextRequest) {
   try {
-    const fallbackReason = request.nextUrl.searchParams.get("fallbackReason");
-    if (
-      fallbackReason
-      && SEARCH_FALLBACK_REASONS.has(fallbackReason as FallbackKey)
-    ) {
-      await recordFallbackActivation({
-        key: fallbackReason as FallbackKey,
-        summary:
-          fallbackReason === "search.algolia_missing_keys"
-            ? "Algolia search keys are missing; fallback catalog search served from API."
-            : "Algolia runtime search failed; fallback catalog search served from API.",
-      });
-    }
-
     const supabase = getAnonClient();
     const marketCode = resolveMarketCodeFromHost(
       request.headers.get("host") ?? request.nextUrl.host,
@@ -131,11 +110,6 @@ export async function GET(request: NextRequest) {
     }
 
     console.info("Search fallback catalog: returning empty records.", error);
-    await recordFallbackActivation({
-      key: "search.catalog_api_degraded",
-      summary: "Fallback catalog API failed and returned empty degraded records.",
-      error,
-    });
     return NextResponse.json(
       { records: [], degraded: true },
       {

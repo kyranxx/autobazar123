@@ -47,7 +47,3 @@ export function formatLocalizedDateTime(
 
   return getLocalizedDateFormatter(locale, true, marketCode).format(new Date(value));
 }
-
-export function formatSkYear(value: string | number | Date): string {
-  return String(new Date(value).getFullYear());
-}

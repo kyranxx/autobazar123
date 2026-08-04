@@ -90,7 +90,7 @@ AutoNinja
 
 ## Launch Sequence
 
-1. Finish the public-launch plan in `PROJECT_STATUS.md`.
+1. Confirm the current public-launch checklist before launch.
 2. User approves opening the site.
 3. Verify production health and maintenance bypass one last time.
 4. Open the site.

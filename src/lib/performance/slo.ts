@@ -9,7 +9,7 @@ interface WebVitalSample {
   timestamp?: string;
 }
 
-export interface SloMetricRow {
+interface SloMetricRow {
   route: string;
   metricName: WebVitalMetricName;
   sampleCount: number;

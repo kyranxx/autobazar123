@@ -46,7 +46,7 @@ interface SeoProgrammaticTaxonomy {
   brandSlugs: readonly string[];
 }
 
-export const SEO_CITIES: Record<string, SeoCityTaxonomyEntry> = {
+const SEO_CITIES: Record<string, SeoCityTaxonomyEntry> = {
   bratislava: { name: "Bratislava", region: "Bratislavský kraj" },
   kosice: { name: "Košice", region: "Košický kraj" },
   zilina: { name: "Žilina", region: "Žilinský kraj" },
@@ -123,11 +123,6 @@ export async function getBrandTaxonomy(
 ): Promise<SeoBrandTaxonomyEntry | null> {
   const taxonomy = await getProgrammaticSeoTaxonomy();
   return taxonomy.brandsBySlug[brandSlug] ?? null;
-}
-
-export async function getSeoBrandSlugs(): Promise<readonly string[]> {
-  const taxonomy = await getProgrammaticSeoTaxonomy();
-  return taxonomy.brandSlugs;
 }
 
 export async function getAllSeoBrands(): Promise<SeoBrandTaxonomyEntry[]> {

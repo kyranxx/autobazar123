@@ -88,14 +88,15 @@ describe("POST /api/account/ads/apply-action", () => {
         getUser: (...args: unknown[]) => getUserMock(...args),
       },
     });
+    const selectQuery = {
+      eq: () => selectQuery,
+      maybeSingle: () => adMaybeSingleMock(),
+    };
+
     createAdminClientMock.mockReturnValue({
       rpc: (...args: unknown[]) => adminRpcMock(...args),
       from: () => ({
-        select: () => ({
-          eq: () => ({
-            maybeSingle: () => adMaybeSingleMock(),
-          }),
-        }),
+        select: () => selectQuery,
       }),
     });
   });

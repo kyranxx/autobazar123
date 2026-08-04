@@ -10,12 +10,6 @@ export const COMPANY_INFO = {
   city: "Bratislava - mestská časť Rača",
   country: "Slovensko",
 } as const;
-export const COMPANY_POSTAL_ADDRESS_LINES = [
-  COMPANY_INFO.streetAddress,
-  `${COMPANY_INFO.postalCode} ${COMPANY_INFO.city}`,
-  COMPANY_INFO.country,
-] as const;
-
 export const PUBLIC_CONTACT_BY_MARKET = Object.fromEntries(
   Object.entries(MARKET_CONFIGS).map(([marketCode, market]) => [
     marketCode,

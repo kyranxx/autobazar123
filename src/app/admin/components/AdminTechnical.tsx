@@ -3,7 +3,6 @@
 import { useLocale } from "next-intl";
 import { AdminFeatureFlags } from "./AdminFeatureFlags";
 import { AdminLogs } from "./AdminLogs";
-import { AdminQualityGates } from "./AdminQualityGates";
 import {
   Tabs,
   TabsContent,
@@ -17,8 +16,6 @@ type AdminTechnicalCopy = {
   eyebrow: string;
   title: string;
   subtitle: string;
-  checksTitle: string;
-  checksText: string;
   flagsTitle: string;
   flagsText: string;
   eventsTitle: string;
@@ -29,11 +26,7 @@ const ADMIN_TECHNICAL_COPY: Record<AdminTechnicalLocale, AdminTechnicalCopy> = {
   sk: {
     eyebrow: "Technické",
     title: "Technické zdravie",
-    subtitle:
-      "Prvá pomoc, keď chceš vedieť, či web beží normálne. Najprv použi kontroly, potom pozri prepínače alebo udalosti.",
-    checksTitle: "Kontroly",
-    checksText:
-      "Ručne spustí automatické kontroly webu a ukáže posledný známy stav.",
+    subtitle: "Prepínače funkcií a systémové udalosti na jednom mieste.",
     flagsTitle: "Prepínače",
     flagsText: "Funkcie zapínajte iba vtedy, keď sú napojené v kóde.",
     eventsTitle: "Udalosti",
@@ -42,11 +35,7 @@ const ADMIN_TECHNICAL_COPY: Record<AdminTechnicalLocale, AdminTechnicalCopy> = {
   en: {
     eyebrow: "Technical",
     title: "Technical health",
-    subtitle:
-      "First aid when you need to know whether the website is running normally. Start with checks, then review feature switches or events.",
-    checksTitle: "Website checks",
-    checksText:
-      "Runs automated website checks manually and shows the last known state.",
+    subtitle: "Feature switches and system events in one place.",
     flagsTitle: "Feature switches",
     flagsText: "Only turn features on when they are connected in code.",
     eventsTitle: "Events",
@@ -90,11 +79,7 @@ export function AdminTechnical() {
         </p>
       </section>
 
-      <div className="grid gap-3 lg:grid-cols-3">
-        <TechnicalHelpCard
-          title={copy.checksTitle}
-          text={copy.checksText}
-        />
+      <div className="grid gap-3 lg:grid-cols-2">
         <TechnicalHelpCard
           title={copy.flagsTitle}
           text={copy.flagsText}
@@ -105,14 +90,8 @@ export function AdminTechnical() {
         />
       </div>
 
-      <Tabs defaultValue="checks" className="space-y-5">
+      <Tabs defaultValue="flags" className="space-y-5">
         <TabsList className="h-auto w-full flex-wrap justify-start gap-2 bg-transparent p-0">
-          <TabsTrigger
-            value="checks"
-            className="h-10 rounded-lg border border-border-subtle bg-surface px-4 data-[state=active]:border-primary data-[state=active]:bg-primary data-[state=active]:text-white"
-          >
-            {copy.checksTitle}
-          </TabsTrigger>
           <TabsTrigger
             value="flags"
             className="h-10 rounded-lg border border-border-subtle bg-surface px-4 data-[state=active]:border-primary data-[state=active]:bg-primary data-[state=active]:text-white"
@@ -127,9 +106,6 @@ export function AdminTechnical() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="checks">
-          <AdminQualityGates />
-        </TabsContent>
         <TabsContent value="flags">
           <AdminFeatureFlags />
         </TabsContent>

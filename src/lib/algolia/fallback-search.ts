@@ -6,7 +6,10 @@ import type {
 import type { AlgoliaCarRecord } from "./index";
 import { getCarsIndexName, getCarsSortIndexOverrides } from "./public-env";
 import { isMarketCode, type MarketCode } from "@/config/markets";
-import type { FallbackKey } from "@/lib/fallbacks/registry";
+
+export type SearchFallbackReason =
+  | "search.algolia_missing_keys"
+  | "search.algolia_unavailable";
 
 type SearchClient = {
   addAlgoliaAgent?: (segment: string, version?: string) => void;
@@ -528,7 +531,7 @@ export function searchFallbackCatalog(
 
 export function createFallbackSearchClient(
   loadCatalog: (
-    reason?: FallbackKey | null,
+    reason?: SearchFallbackReason | null,
     marketCode?: MarketCode,
   ) => Promise<AlgoliaCarRecord[]>,
 ): SearchClient {

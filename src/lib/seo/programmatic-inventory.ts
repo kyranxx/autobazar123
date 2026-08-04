@@ -5,7 +5,7 @@ import { buildAdPath } from "@/lib/cars/ad-path";
 import { getMarketConfig, type MarketCode } from "@/config/markets";
 import { getMarketPath } from "@/lib/routes";
 
-export const PROGRAMMATIC_SITE_URL = BRAND_URL;
+const PROGRAMMATIC_SITE_URL = BRAND_URL;
 
 function toAbsoluteProgrammaticUrl(
   pathOrUrl: string,

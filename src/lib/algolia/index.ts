@@ -8,8 +8,8 @@ import { getCityCoordinates } from "@/lib/geo/cities";
 import {
   createFallbackSearchClient,
   isRecoverableAlgoliaSearchError,
+  type SearchFallbackReason,
 } from "./fallback-search";
-import type { FallbackKey } from "@/lib/fallbacks/registry";
 import { getTrimmedEnv } from "@/lib/env";
 import {
   DEFAULT_MARKET_CODE,
@@ -46,7 +46,7 @@ let fallbackSearchClient: ReturnType<typeof createFallbackSearchClient> | null =
 let hasWarnedMissingSearchKeys = false;
 let hasWarnedSearchFallback = false;
 const fallbackCatalogPromises = new Map<string, Promise<AlgoliaCarRecord[]>>();
-let activeFallbackCatalogReason: FallbackKey | null = null;
+let activeFallbackCatalogReason: SearchFallbackReason | null = null;
 
 function resolveInternalApiUrl(
   pathname: string,
@@ -75,7 +75,7 @@ function resolveInternalApiUrl(
 }
 
 async function loadFallbackCatalog(
-  reason: FallbackKey | null = activeFallbackCatalogReason,
+  reason: SearchFallbackReason | null = activeFallbackCatalogReason,
   marketCode?: MarketCode,
 ): Promise<AlgoliaCarRecord[]> {
   const cacheKey = `${reason ?? "default"}:${marketCode ?? "all"}`;

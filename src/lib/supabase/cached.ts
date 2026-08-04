@@ -10,7 +10,6 @@ import {
   ADS_CACHE_TAG,
   FEATURED_CARS_CACHE_TAG,
 } from "@/lib/cache/tags";
-import { recordFallbackActivation } from "@/lib/fallbacks/monitor";
 import { getListingFallbackImage } from "@/lib/cars/fallback-images";
 import { getAnonClient } from "./anon";
 import type { MarketCode } from "@/config/markets";
@@ -109,11 +108,6 @@ async function fetchFeaturedCarsUncached(marketCode: MarketCode): Promise<Featur
       .slice(0, 12);
   } catch (error) {
     console.info("Featured cars fallback: returning empty list.", error);
-    void recordFallbackActivation({
-      key: "home.featured_cars_empty_fallback",
-      summary: "Featured cars query failed and returned empty fallback list.",
-      error,
-    });
     return [];
   }
 }

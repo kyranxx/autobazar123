@@ -20,7 +20,7 @@ Use when a request includes:
 
 ## Workflow
 
-1. read `AGENTS.md` and `docs/PROJECT_PLAYBOOK.md` first.
+1. read `AGENTS.md` first.
 2. locate the latest failing signal source (CI log, Vercel log, gate output).
 3. identify whether failure is:
    - build-time
@@ -38,7 +38,6 @@ Use when a request includes:
 
 ## References
 
-- `docs/PROJECT_PLAYBOOK.md`
 - `docs/security-top-10-defaults.md`
 - `package.json`
 - Vercel deployment logs and CI run details
@@ -48,4 +47,3 @@ Use when a request includes:
 - do not skip release checks to preserve speed
 - do not hand-wave a warning as a success path
 - treat failed required gates as incomplete until resolved
-

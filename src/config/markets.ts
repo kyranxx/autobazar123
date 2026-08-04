@@ -52,12 +52,6 @@ export type MarketDefinition<TCode extends string = string> = {
   };
 };
 
-export function defineMarket<const TMarket extends MarketDefinition>(
-  market: TMarket,
-): TMarket {
-  return market;
-}
-
 const IDENTITY_ROUTE_MAPPINGS: readonly MarketRouteMapping[] = [];
 
 export const MARKET_DEFINITIONS = [
@@ -204,7 +198,7 @@ export const MARKET_CONFIGS = Object.fromEntries(
   MARKET_DEFINITIONS.map((market) => [market.code, market]),
 ) as Record<MarketCode, MarketConfig>;
 
-export const MARKET_REGISTRY = createMarketRegistry(MARKET_DEFINITIONS);
+const MARKET_REGISTRY = createMarketRegistry(MARKET_DEFINITIONS);
 
 export function isMarketCode(value: unknown): value is MarketCode {
   return typeof value === "string" && MARKET_CODES.includes(value as MarketCode);

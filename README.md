@@ -2,7 +2,7 @@
 
 AutoNinja is a Slovak car marketplace built with Next.js, Supabase, Algolia, Stripe, and Resend. The app covers listing discovery, vehicle detail pages, user accounts, dealer/admin flows, saved searches, inquiries, direct EUR listing payments for private sellers, and prepaid dealer balance actions.
 
-Agents: read `AGENTS.md` and `PROJECT_STATUS.md` before starting work in this repo.
+Agents: read `AGENTS.md` before starting work in this repo.
 
 ## Local run
 
@@ -31,13 +31,8 @@ npm run start
 npm run lint
 npm run typecheck
 npm run test:unit
-npm run test:web-interface
-npm run test:a11y
-npm run test:keyboard
-npm run test:mobile-matrix
-npm run test:ui-quality-gate
-npm run test:release-gauntlet
-npm run audit:chrome-console
+npm run test:e2e
+npm run test:smoke
 ```
 
 ## Folder structure
@@ -57,9 +52,9 @@ supabase/
   migrations/           checked-in schema changes
   tests/                pgTAP / database tests
 
-scripts/                one-off tooling, audits, maintenance scripts
+scripts/                focused maintenance and verification scripts
 tests/                  Playwright end-to-end and quality-gate tests
-docs/                   project playbooks and operating docs
+docs/                   current operating and architecture docs
 tasks/                  task-specific working briefs when explicitly tracked
 ```
 
@@ -134,4 +129,3 @@ See `docs/market-extension-guide.md` before connecting another country TLD.
 - Billing checkout and webhook processing rely on Stripe.
 - Transactional emails rely on Resend.
 - Local agent behavior lives in `AGENTS.md`.
-- The main operator docs live in `docs/PROJECT_PLAYBOOK.md`.

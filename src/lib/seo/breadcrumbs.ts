@@ -106,7 +106,7 @@ export function buildSearchResultsBreadcrumbItems(
   return items;
 }
 
-export function buildSearchResultsCurrentHref(
+function buildSearchResultsCurrentHref(
   searchParams: BreadcrumbSearchParams,
   marketCode: MarketCode = "SK",
 ): string {

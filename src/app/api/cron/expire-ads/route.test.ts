@@ -16,10 +16,6 @@ const {
   revalidateAdsCacheTagsMock: vi.fn(),
 }));
 
-const { recordFallbackActivationMock } = vi.hoisted(() => ({
-  recordFallbackActivationMock: vi.fn().mockResolvedValue(undefined),
-}));
-
 vi.mock("@/lib/algolia", () => ({
   getAdminClient: getAdminClientMock,
   getCarsIndexName: () => "ads",
@@ -29,10 +25,6 @@ vi.mock("@/lib/cron/route-helpers", () => ({
   createCronAdminClient: createCronAdminClientMock,
   rejectWhenInvalidCronRequest: rejectWhenInvalidCronRequestMock,
   revalidateAdsCacheTags: revalidateAdsCacheTagsMock,
-}));
-
-vi.mock("@/lib/fallbacks/monitor", () => ({
-  recordFallbackActivation: recordFallbackActivationMock,
 }));
 
 import { GET } from "./route";
@@ -87,7 +79,7 @@ describe("GET /api/cron/expire-ads", () => {
     });
   });
 
-  it("returns a degraded response and records fallback telemetry when Algolia cleanup fails", async () => {
+  it("returns a degraded response when Algolia cleanup fails", async () => {
     const algoliaError = new Error("Algolia unavailable");
     algoliaDeleteObjectsMock.mockRejectedValue(algoliaError);
     installAdminClientMock({
@@ -112,15 +104,6 @@ describe("GET /api/cron/expire-ads", () => {
           summary: "Algolia stale ad cleanup failed",
         },
       ],
-    });
-    expect(recordFallbackActivationMock).toHaveBeenCalledWith({
-      key: "cron.expire_ads_algolia_cleanup_failed",
-      summary: "Algolia stale ad cleanup failed during expire-ads cron.",
-      error: algoliaError,
-      metadata: {
-        indexName: "ads",
-        staleAdCount: 1,
-      },
     });
   });
 

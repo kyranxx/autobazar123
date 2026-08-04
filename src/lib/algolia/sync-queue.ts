@@ -6,7 +6,7 @@ import {
   type AlgoliaCarRecord,
 } from "@/lib/algolia";
 
-export const ALGOLIA_AD_SELECT = `
+const ALGOLIA_AD_SELECT = `
   id,
   market_code,
   brand,
