@@ -5,7 +5,6 @@ import { BreadcrumbJsonLd } from "@/components/JsonLd";
 import ThemePreviewShell from "@/components/theme/ThemePreviewShell";
 import CarDetailClient from "./CarDetailClient";
 import { createClient } from "@/lib/supabase/server";
-import { getFlagsForClient } from "@/lib/feature-flags";
 import type { MarketCode } from "@/config/markets";
 import { serializeJsonLd } from "@/lib/seo/json-ld";
 import { normalizeOgImageUrl } from "@/lib/seo/og-image";
@@ -198,17 +197,14 @@ export default async function CarDetailPage({
     notFound();
   }
 
-  const [similarCars, flags] = await Promise.all([
-    getSimilarCars(
-      car.brand,
-      car.model,
-      car.year,
-      car.transmission,
-      adId,
-      market.code,
-    ),
-    getFlagsForClient(),
-  ]);
+  const similarCars = await getSimilarCars(
+    car.brand,
+    car.model,
+    car.year,
+    car.transmission,
+    adId,
+    market.code,
+  );
 
   const carHref = getMarketPath(buildAdPath({
     id: car.id,
@@ -268,7 +264,7 @@ export default async function CarDetailPage({
           carId={adId}
           initialCar={car}
           initialSimilarCars={similarCars}
-          enableViewTransitions={flags.view_transitions ?? true}
+          enableViewTransitions
           breadcrumbItems={breadcrumbItems}
           isAdminPreview={isAdminPreview}
         />

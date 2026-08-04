@@ -62,28 +62,11 @@ export interface RevenueStats {
   stripeStatus?: RevenueStripeStatus;
 }
 
-export interface RevenueStripeStatus {
+interface RevenueStripeStatus {
   webhookStatus: "healthy" | "degraded" | "idle";
   lastProcessedAt: string | null;
   failedEventsLast24h: number;
   recentEvents: number;
-}
-
-export interface AdminBillingTransaction {
-  id: string;
-  actor_email: string;
-  actor_name: string | null;
-  dealer_name: string | null;
-  ad_label: string | null;
-  transaction_kind: string;
-  operation_type: string | null;
-  amount_eur: number;
-  bonus_eur: number;
-  description: string;
-  stripe_session_id: string | null;
-  stripe_payment_id: string | null;
-  invoice_url: string | null;
-  created_at: string;
 }
 
 export interface PendingAd {
@@ -192,38 +175,6 @@ export interface AdminUserImpersonationLink {
   fullName: string | null;
 }
 
-export interface SystemLog {
-  id: string;
-  level: string;
-  category: string;
-  message: string;
-  request_id: string | null;
-  user_id: string | null;
-  metadata: Record<string, unknown> | null;
-  error_stack: string | null;
-  created_at: string;
-}
-
-export interface AuditLog {
-  id: string;
-  admin_id: string;
-  admin_email: string | null;
-  action: string;
-  target_type: string;
-  target_id: string | null;
-  details: Record<string, unknown> | null;
-  created_at: string;
-}
-
-export interface FeatureFlag {
-  id: string;
-  key: string;
-  enabled: boolean;
-  description: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
 export interface SiteSetting {
   key: string;
   value: string;
@@ -303,17 +254,6 @@ export interface AdminEmailDelivery {
   metadata: Record<string, unknown> | null;
   html_preview: string | null;
   created_at: string;
-}
-
-export interface AdminContactMessage {
-  id: string;
-  name: string;
-  email: string;
-  subject: string;
-  message: string;
-  status: "new" | "in_progress" | "resolved" | "spam";
-  created_at: string;
-  updated_at: string;
 }
 
 export interface AdminEmailTemplateExample {
@@ -1416,70 +1356,6 @@ export async function getRevenueStats(): Promise<RevenueStats> {
     stripeRevenue: revenueTotals.total,
     stripeStatus,
   };
-}
-
-export async function getBillingTransactions(
-  limit = 80,
-): Promise<AdminBillingTransaction[]> {
-  const { supabase } = await requireAuth();
-  const safeLimit = Math.min(Math.max(limit, 1), 200);
-
-  const { data, error } = await supabase
-    .from("billing_transactions")
-    .select(
-      `
-      id,
-      transaction_kind,
-      operation_type,
-      amount_cents,
-      bonus_cents,
-      description,
-      stripe_session_id,
-      stripe_payment_id,
-      invoice_url,
-      created_at,
-      profiles:actor_user_id (email, full_name),
-      dealers:dealer_id (name),
-      ads:ad_id (brand, model, year)
-    `,
-    )
-    .order("created_at", { ascending: false })
-    .limit(safeLimit);
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return ((data as Record<string, unknown>[] | null) || []).map((row) => {
-    const profile = row.profiles as
-      | { email?: string | null; full_name?: string | null }
-      | null;
-    const dealer = row.dealers as { name?: string | null } | null;
-    const ad = row.ads as
-      | { brand?: string | null; model?: string | null; year?: number | null }
-      | null;
-    const adLabel =
-      ad?.brand || ad?.model
-        ? [ad.brand, ad.model, ad.year].filter(Boolean).join(" ")
-        : null;
-
-    return {
-      id: row.id as string,
-      actor_email: profile?.email || "bez emailu",
-      actor_name: profile?.full_name || null,
-      dealer_name: dealer?.name || null,
-      ad_label: adLabel,
-      transaction_kind: (row.transaction_kind as string | null) || "unknown",
-      operation_type: (row.operation_type as string | null) || null,
-      amount_eur: Number(row.amount_cents || 0) / 100,
-      bonus_eur: Number(row.bonus_cents || 0) / 100,
-      description: (row.description as string | null) || "",
-      stripe_session_id: (row.stripe_session_id as string | null) || null,
-      stripe_payment_id: (row.stripe_payment_id as string | null) || null,
-      invoice_url: (row.invoice_url as string | null) || null,
-      created_at: row.created_at as string,
-    };
-  });
 }
 
 export async function getPendingAds(): Promise<PendingAd[]> {
@@ -2688,125 +2564,6 @@ export async function unbanUser(userId: string) {
   return { success: true };
 }
 
-export async function getSystemLogs(
-  level?: string,
-  category?: string,
-  limit = 100,
-): Promise<SystemLog[]> {
-  const { supabase } = await requireAuth();
-
-  let query = supabase
-    .from("system_logs")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(limit);
-
-  if (level) query = query.eq("level", level);
-  if (category) query = query.eq("category", category);
-
-  const { data } = await query;
-  return (data as SystemLog[]) || [];
-}
-
-export async function getAuditLogs(limit = 100): Promise<AuditLog[]> {
-  const { supabase } = await requireAuth();
-
-  const { data } = await supabase
-    .from("admin_audit_logs")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(limit);
-
-  return (data as AuditLog[]) || [];
-}
-
-export async function getFeatureFlags(): Promise<FeatureFlag[]> {
-  const { supabase } = await requireAuth();
-
-  const { data, error } = await supabase
-    .from("feature_flags")
-    .select("*")
-    .order("key", { ascending: true });
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return (data as FeatureFlag[]) || [];
-}
-
-export async function toggleFeatureFlag(flagId: string, enabled: boolean) {
-  const { userId, supabase } = await requireAuth({ requireMfa: true });
-
-  const { data: flag } = await supabase
-    .from("feature_flags")
-    .select("key, rollout_percentage")
-    .eq("id", flagId)
-    .single();
-
-  const { error } = await supabase
-    .from("feature_flags")
-    .update({
-      enabled,
-      rollout_percentage:
-        enabled && typeof flag?.rollout_percentage === "number" && flag.rollout_percentage <= 0
-          ? 100
-          : flag?.rollout_percentage,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", flagId);
-
-  if (error) throw new Error(error.message);
-
-  await supabase.from("admin_audit_logs").insert({
-    admin_id: userId,
-    action: "update_feature_flag",
-    target_type: "feature_flag",
-    target_id: flag?.key || flagId,
-    details: { enabled },
-    created_at: new Date().toISOString(),
-  });
-
-  revalidatePath("/admin");
-  return { success: true };
-}
-
-export async function createFeatureFlag(
-  key: string,
-  description: string,
-): Promise<FeatureFlag> {
-  const { userId, supabase } = await requireAuth({ requireMfa: true });
-
-  const createdAt = new Date().toISOString();
-  const { data, error } = await supabase
-    .from("feature_flags")
-    .insert({
-      key,
-      name: key,
-      description,
-      enabled: false,
-      rollout_percentage: 100,
-      target_users: [],
-      created_at: createdAt,
-      updated_at: createdAt,
-    })
-    .select("*")
-    .single();
-
-  if (error || !data) throw new Error(error?.message || "Failed to create feature flag");
-
-  await supabase.from("admin_audit_logs").insert({
-    admin_id: userId,
-    action: "create_feature_flag",
-    target_type: "feature_flag",
-    target_id: key,
-    details: { action: "created" },
-    created_at: new Date().toISOString(),
-  });
-
-  revalidatePath("/admin");
-  return data as FeatureFlag;
-}
-
 export async function getSiteSettings(): Promise<SiteSetting[]> {
   const { supabase } = await requireAuth();
 
@@ -3290,67 +3047,6 @@ export async function getEmailDeliveries(options?: {
   }
 
   return (data as AdminEmailDelivery[] | null) || [];
-}
-
-export async function getContactMessages(options?: {
-  subject?: string;
-  status?: "new" | "in_progress" | "resolved" | "spam";
-  limit?: number;
-}): Promise<AdminContactMessage[]> {
-  const { supabase } = await requireAuth();
-  const limit = Math.min(Math.max(options?.limit || 20, 1), 100);
-
-  let query = supabase
-    .from("contact_messages")
-    .select("id, name, email, subject, message, status, created_at, updated_at")
-    .order("created_at", { ascending: false })
-    .limit(limit);
-
-  if (options?.subject) {
-    query = query.eq("subject", options.subject);
-  }
-
-  if (options?.status) {
-    query = query.eq("status", options.status);
-  }
-
-  const { data, error } = await query;
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return (data as AdminContactMessage[] | null) || [];
-}
-
-export async function updateContactMessageStatus(
-  messageId: string,
-  status: AdminContactMessage["status"],
-) {
-  const { userId, supabase } = await requireAuth({ requireMfa: true });
-
-  const { error } = await supabase
-    .from("contact_messages")
-    .update({
-      status,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", messageId);
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  await supabase.from("admin_audit_logs").insert({
-    admin_id: userId,
-    action: "update_site_settings",
-    target_type: "setting",
-    target_id: `contact_message:${messageId}`,
-    details: { status },
-    created_at: new Date().toISOString(),
-  });
-
-  revalidatePath("/admin");
-  return { success: true };
 }
 
 export async function getEmailTemplateExamples(): Promise<AdminEmailTemplateExample[]> {

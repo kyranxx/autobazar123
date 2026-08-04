@@ -1,9 +1,8 @@
 import { Suspense } from "react";
 import { Metadata } from "next";
 import ThemePreviewShell from "@/components/theme/ThemePreviewShell";
-import { getFlagsForClient } from "@/lib/feature-flags";
+import { getTrimmedEnv } from "@/lib/env";
 import { getRequestMarketConfig } from "@/lib/market/request";
-import { createClient } from "@/lib/supabase/server";
 import DashboardClient from "./DashboardClient";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -45,25 +44,16 @@ function stringifySearchParams(searchParams: Record<string, string | string[] | 
   return params.toString();
 }
 
-async function getDashboardFlags(supabase: Awaited<ReturnType<typeof createClient>>) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  return getFlagsForClient(user?.id);
-}
-
 export default async function DashboardPage({
   searchParams,
 }: {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const emptySearchParams: Record<string, string | string[] | undefined> = {};
-  const [supabase, resolvedSearchParams] = await Promise.all([
-    createClient(),
-    searchParams ?? Promise.resolve(emptySearchParams),
-  ]);
-  const flags = await getDashboardFlags(supabase);
+  const resolvedSearchParams = await (searchParams ?? Promise.resolve(emptySearchParams));
+  const vinDecodingEnabled = Boolean(
+    getTrimmedEnv("VINCARIO_API_KEY") && getTrimmedEnv("VINCARIO_SECRET_KEY"),
+  );
   const tabParam = resolvedSearchParams.tab;
   const submitted = resolvedSearchParams.submitted;
   const updated = resolvedSearchParams.updated;
@@ -73,7 +63,7 @@ export default async function DashboardPage({
       <div className="market-page min-h-screen">
         <Suspense fallback={<DashboardLoader />}>
           <DashboardClient
-            vinDecodingEnabled={Boolean(flags.vin_decoding)}
+            vinDecodingEnabled={vinDecodingEnabled}
             initialSearchParams={stringifySearchParams(resolvedSearchParams)}
             initialTab={typeof tabParam === "string" ? tabParam : null}
             submitted={typeof submitted === "string" ? submitted : null}

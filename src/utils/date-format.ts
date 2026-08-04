@@ -32,7 +32,7 @@ export function formatSkDate(value: string | number | Date): string {
   return SK_DATE_FORMATTER.format(new Date(value));
 }
 
-export function formatSkDateTime(value: string | number | Date): string {
+function formatSkDateTime(value: string | number | Date): string {
   return SK_DATE_TIME_FORMATTER.format(new Date(value));
 }
 

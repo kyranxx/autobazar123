@@ -14,21 +14,15 @@ import {
   AdminToday,
   AdminAds,
   AdminUsers,
-  AdminRevenue,
   AdminSettings,
   AdminEmails,
-  AdminAnalytics,
-  AdminTechnical,
 } from "./components";
 
 const ADMIN_TABS = [
   { id: "today", href: "/admin/today", icon: OverviewIcon },
   { id: "users", href: "/admin/users", icon: UsersIcon },
   { id: "ads", href: "/admin/ads", icon: ModerationIcon },
-  { id: "money", href: "/admin/money", icon: RevenueIcon },
-  { id: "traffic", href: "/admin/traffic", icon: AnalyticsIcon },
   { id: "emails", href: "/admin/emails", icon: EmailsIcon },
-  { id: "technical", href: "/admin/technical", icon: QualityIcon },
   { id: "settings", href: "/admin/settings", icon: SettingsIcon },
 ];
 
@@ -86,42 +80,6 @@ function UsersIcon({ className }: { className?: string }) {
   );
 }
 
-function RevenueIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={1.5}
-        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-      />
-    </svg>
-  );
-}
-
-function AnalyticsIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={1.5}
-        d="M4 19.5h16M7.5 16V10.5M12 16V6.5M16.5 16V12"
-      />
-    </svg>
-  );
-}
-
 function EmailsIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -165,24 +123,6 @@ function SettingsIcon({ className }: { className?: string }) {
         strokeLinejoin="round"
         strokeWidth={1.5}
         d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-      />
-    </svg>
-  );
-}
-
-function QualityIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={1.5}
-        d="M9 12l2 2 4-4m3.5-2.5a2.5 2.5 0 00-2.5-2.5h-9A2.5 2.5 0 005 7.5v9A2.5 2.5 0 007.5 19h9a2.5 2.5 0 002.5-2.5v-9z"
       />
     </svg>
   );
@@ -627,10 +567,7 @@ export default function AdminDashboardClient({
                 )}
                 {activeTab === "ads" && <AdminAds />}
                 {activeTab === "users" && <AdminUsers />}
-                {activeTab === "money" && <AdminRevenue />}
-                {activeTab === "traffic" && <AdminAnalytics />}
                 {activeTab === "emails" && <AdminEmails />}
-                {activeTab === "technical" && <AdminTechnical />}
                 {activeTab === "settings" && <AdminSettings />}
               </div>
             </div>

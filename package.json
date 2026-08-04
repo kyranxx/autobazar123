@@ -10,17 +10,11 @@
     "typecheck": "node scripts/typecheck.mjs",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest --watch",
-    "test:coverage": "vitest run --coverage",
     "test:db:rls": "node scripts/supabase-db-tests.mjs",
-    "analyze": "cross-env ANALYZE=true next build",
     "test:e2e": "npx playwright test tests/e2e.test.ts",
     "test:smoke": "npx tsx tests/smoke-test.ts",
     "check:prod-rate-limit-env": "node scripts/check-prod-rate-limit-env.mjs",
-    "check:i18n-contract": "node scripts/i18n-catalog-contract.mjs",
-    "test:seo-taxonomy": "vitest run src/lib/seo/programmatic-taxonomy.test.ts src/proxy.test.ts src/app/sitemap.test.ts",
-    "test:uploads-release": "vitest run src/app/api/images/upload-url/route.test.ts src/utils/upload.test.ts src/lib/security/csp.test.ts",
-    "test:payments-release": "vitest run src/app/api/billing/checkout-status/route.test.ts src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts src/lib/email/jobs.test.ts",
-    "test:cron-email-release": "vitest run src/lib/email/send-marketplace-alerts.test.ts src/app/api/cron/send-alerts/route.test.ts src/app/api/cron/process-email-jobs/route.test.ts src/app/api/cron/cleanup-sold/route.test.ts src/app/api/cron/expire-ads/route.test.ts src/lib/cron/route-helpers.test.ts src/lib/email/jobs.test.ts src/lib/email/transactional-email.test.ts src/lib/email/react-email-templates.test.ts"
+    "check:i18n-contract": "node scripts/i18n-catalog-contract.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -51,7 +45,6 @@
     "zod": "^4.3.5"
   },
   "devDependencies": {
-    "@next/bundle-analyzer": "^16.2.9",
     "@playwright/test": "^1.57.0",
     "@tailwindcss/postcss": "^4.2.2",
     "@testing-library/jest-dom": "^6.9.1",
@@ -61,7 +54,6 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19",
     "@types/sanitize-html": "^2.16.1",
-    "cross-env": "^10.1.0",
     "dotenv": "^17.3.1",
     "eslint": "^9.39.2",
     "eslint-config-next": "^16.2.9",

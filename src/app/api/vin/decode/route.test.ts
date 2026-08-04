@@ -7,7 +7,6 @@ const requireAuthenticatedUserMock = vi.fn();
 const parseJsonBodyMock = vi.fn();
 const createClientMock = vi.fn();
 const getTrimmedEnvMock = vi.fn();
-const getFlagsForClientMock = vi.fn();
 const decodeVinWithVincarioMock = vi.fn();
 
 vi.mock("@/lib/api/route-helpers", () => ({
@@ -25,10 +24,6 @@ vi.mock("@/lib/supabase/server", () => ({
 
 vi.mock("@/lib/env", () => ({
   getTrimmedEnv: (...args: unknown[]) => getTrimmedEnvMock(...args),
-}));
-
-vi.mock("@/lib/feature-flags", () => ({
-  getFlagsForClient: (...args: unknown[]) => getFlagsForClientMock(...args),
 }));
 
 vi.mock("@/lib/vin/decode", () => ({
@@ -70,7 +65,6 @@ describe("POST /api/vin/decode", () => {
       if (name === "VINCARIO_SECRET_KEY") return "secret-key";
       return null;
     });
-    getFlagsForClientMock.mockResolvedValue({ vin_decoding: true });
     decodeVinWithVincarioMock.mockResolvedValue({
       vin: "WVWZZZ1JZ3W386752",
       makeName: "Volkswagen",
@@ -83,19 +77,6 @@ describe("POST /api/vin/decode", () => {
       driveType: "front",
       provider: "vincario",
     });
-  });
-
-  it("blocks decoding when the admin feature flag is off", async () => {
-    getFlagsForClientMock.mockResolvedValue({ vin_decoding: false });
-
-    const response = await POST(createRequest());
-    const payload = await response.json();
-
-    expect(response.status).toBe(503);
-    expect(payload).toEqual({
-      error: "VIN decoding is currently disabled.",
-    });
-    expect(decodeVinWithVincarioMock).not.toHaveBeenCalled();
   });
 
   it("blocks decoding when Vincario credentials are missing", async () => {
@@ -111,7 +92,7 @@ describe("POST /api/vin/decode", () => {
     expect(decodeVinWithVincarioMock).not.toHaveBeenCalled();
   });
 
-  it("decodes the VIN when the feature flag and credentials are available", async () => {
+  it("decodes the VIN when credentials are available", async () => {
     const response = await POST(createRequest());
     const payload = await response.json();
 
@@ -131,7 +112,6 @@ describe("POST /api/vin/decode", () => {
         provider: "vincario",
       },
     });
-    expect(getFlagsForClientMock).toHaveBeenCalledWith("user-123");
     expect(decodeVinWithVincarioMock).toHaveBeenCalledWith(
       "WVWZZZ1JZ3W386752",
       "api-key",

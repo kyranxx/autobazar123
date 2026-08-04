@@ -1,8 +1,7 @@
 import { Metadata } from "next";
 import AdWizardClient from "@/app/(site)/pridat-inzerat/AdWizardClient";
-import { getFlagsForClient } from "@/lib/feature-flags";
+import { getTrimmedEnv } from "@/lib/env";
 import { getRequestMarketConfig } from "@/lib/market/request";
-import { createClient } from "@/lib/supabase/server";
 
 export async function generateMetadata(): Promise<Metadata> {
   const market = await getRequestMarketConfig();
@@ -23,28 +22,22 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-async function getEditAdFlags(supabase: Awaited<ReturnType<typeof createClient>>) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  return getFlagsForClient(user?.id);
-}
-
 export default async function EditAdPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const [{ id }, supabase] = await Promise.all([params, createClient()]);
-  const flags = await getEditAdFlags(supabase);
+  const { id } = await params;
+  const vinDecodingEnabled = Boolean(
+    getTrimmedEnv("VINCARIO_API_KEY") && getTrimmedEnv("VINCARIO_SECRET_KEY"),
+  );
 
   return (
     <div className="market-page min-h-screen">
       <AdWizardClient
         mode="edit"
         adId={id}
-        vinDecodingEnabled={Boolean(flags.vin_decoding)}
+        vinDecodingEnabled={vinDecodingEnabled}
       />
     </div>
   );

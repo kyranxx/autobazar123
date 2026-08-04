@@ -496,7 +496,7 @@ export function AdminToday({
                 label={copy.taskPayments}
                 value={paymentErrors}
                 helper={copy.taskPaymentsHelper}
-                href="/admin/money"
+                href="https://dashboard.stripe.com/"
                 tone={paymentErrors > 0 ? "error" : "success"}
               />
               <TodayTask
@@ -505,7 +505,7 @@ export function AdminToday({
                 label={copy.taskTechnical}
                 value={problemCount}
                 helper={copy.taskTechnicalHelper}
-                href="/admin/technical"
+                href="https://vercel.com/dashboard"
                 tone={problemCount > 0 ? "error" : "success"}
               />
               <TodayTask
@@ -561,31 +561,31 @@ export function AdminToday({
                 label={copy.monthlyRevenueMetric}
                 value={formatCurrency(revenue.thisMonth, adminLocale)}
                 helper={`${copy.todayPrefix}: ${formatCurrency(revenue.today, adminLocale)}`}
-                href="/admin/money"
+                href="https://dashboard.stripe.com/"
               />
               <MetricCard
                 label={copy.stripeTotalMetric}
                 value={formatCurrency(revenue.stripeRevenue, adminLocale)}
                 helper={`${copy.dealerBalancePrefix}: ${formatCurrency(revenue.totalDealerBalanceEur, adminLocale)}`}
-                href="/admin/money"
+                href="https://dashboard.stripe.com/"
               />
               <MetricCard
                 label={copy.paidAdsMetric}
                 value={formatNumber(founder.paidAdsPosted, adminLocale)}
                 helper={`${copy.daysPrefix} ${formatNumber(founder.windowDays, adminLocale)} ${copy.daysSuffix}`}
-                href="/admin/money"
+                href="https://dashboard.stripe.com/"
               />
               <MetricCard
                 label={copy.paidFeaturesMetric}
                 value={formatNumber(founder.paidFeaturePurchases, adminLocale)}
                 helper={copy.paidFeaturesHelper}
-                href="/admin/money"
+                href="https://dashboard.stripe.com/"
               />
               <MetricCard
                 label={copy.listingViewsMetric}
                 value={formatNumber(founder.listingViews, adminLocale)}
                 helper={copy.listingViewsHelper}
-                href="/admin/traffic"
+                href="https://analytics.google.com/analytics/web/"
               />
             </div>
           )}
