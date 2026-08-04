@@ -1,11 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getPublicCarData } from "./public-car-detail";
+import { getAdminCarPreviewData, getPublicCarData } from "./public-car-detail";
 
 const createAdminClientMock = vi.fn();
+const isCurrentUserSiteAdminMock = vi.fn();
 const AD_ID = "75573f75-b6c0-458c-adf7-c165e5b32e5e";
 
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => createAdminClientMock(),
+}));
+
+vi.mock("@/lib/auth/site-admin", () => ({
+  isCurrentUserSiteAdmin: () => isCurrentUserSiteAdminMock(),
 }));
 
 function createAdsQueryMock(row: unknown) {
@@ -149,5 +154,43 @@ describe("getPublicCarData", () => {
     expect(createAdminClientMock).not.toHaveBeenCalled();
     expect(fromMock).not.toHaveBeenCalled();
     expect(consoleErrorSpy).not.toHaveBeenCalled();
+  });
+
+  it("loads pending ads for an authenticated admin preview without public filters", async () => {
+    const row = {
+      id: AD_ID,
+      status: "pending",
+      market_code: "SK",
+      brand: "Volkswagen",
+      model: "Golf Variant",
+      year: 2020,
+      price_eur: 15000,
+      mileage_km: 100000,
+      fuel: "Diesel",
+      transmission: "Manual",
+      body_style: "Combi",
+      seller: null,
+    };
+    const adsQuery = createAdsQueryMock(row);
+    const fromMock = vi.fn(() => adsQuery);
+    createAdminClientMock.mockReturnValue({ from: fromMock });
+    isCurrentUserSiteAdminMock.mockResolvedValue(true);
+
+    const result = await getAdminCarPreviewData(AD_ID, "SK");
+
+    expect(result?.id).toBe(AD_ID);
+    expect(result?.brand).toBe("Volkswagen");
+    expect(adsQuery.eq).toHaveBeenCalledWith("id", AD_ID);
+    expect(adsQuery.eq).toHaveBeenCalledWith("market_code", "SK");
+    expect(adsQuery.eq).not.toHaveBeenCalledWith("status", "active");
+    expect(adsQuery.eq).not.toHaveBeenCalledWith("is_hidden", false);
+    expect(adsQuery.maybeSingle).toHaveBeenCalledOnce();
+  });
+
+  it("fails closed when the preview requester is not an admin", async () => {
+    isCurrentUserSiteAdminMock.mockResolvedValue(false);
+
+    await expect(getAdminCarPreviewData(AD_ID, "SK")).resolves.toBeNull();
+    expect(createAdminClientMock).not.toHaveBeenCalled();
   });
 });

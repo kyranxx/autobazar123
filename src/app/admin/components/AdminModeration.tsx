@@ -17,7 +17,7 @@ import {
   rejectAd,
   type PendingAd,
 } from "../actions";
-import { buildAdPath } from "@/lib/cars/ad-path";
+import { buildAdminPreviewAdPath } from "@/lib/cars/ad-path";
 
 type AdminModerationLocale = "sk" | "en";
 
@@ -354,7 +354,7 @@ function ModerationCard({
 
             <div className="flex items-center gap-2">
               <Link
-                href={buildAdPath({
+                href={buildAdminPreviewAdPath({
                   id: ad.id,
                   brand: ad.brand,
                   model: ad.model,

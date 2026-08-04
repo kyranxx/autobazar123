@@ -1,6 +1,13 @@
 const ROUTE_UUID_REGEX =
   /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:-.+)?$/i;
 
+export type AdPathInput = {
+  id: string;
+  brand?: string | null;
+  model?: string | null;
+  year?: number | string | null;
+};
+
 function normalizeForSlug(value: string): string {
   return value
     .normalize("NFKD")
@@ -24,12 +31,7 @@ export function buildAdPath({
   brand,
   model,
   year,
-}: {
-  id: string;
-  brand?: string | null;
-  model?: string | null;
-  year?: number | string | null;
-}): string {
+}: AdPathInput): string {
   const slugSource = [brand, model, year ? String(year) : null]
     .filter((value): value is string => Boolean(value && value.trim()))
     .join("-");
@@ -41,4 +43,8 @@ export function buildAdPath({
   }
 
   return `/auto/${id}-${slug}`;
+}
+
+export function buildAdminPreviewAdPath(input: AdPathInput): string {
+  return `${buildAdPath(input)}?preview=admin`;
 }

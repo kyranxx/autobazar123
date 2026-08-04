@@ -69,6 +69,7 @@ interface CarDetailClientProps {
   initialSimilarCars: SimilarCar[];
   enableViewTransitions: boolean;
   breadcrumbItems: BreadcrumbTrailItem[];
+  isAdminPreview: boolean;
 }
 
 interface CarDetailState {
@@ -183,6 +184,10 @@ type CarDetailText = {
     title: string;
     description: string;
     back: string;
+  };
+  adminPreview: {
+    title: string;
+    description: string;
   };
   views: (count: string) => string;
 };
@@ -316,6 +321,11 @@ const CAR_DETAIL_TEXT: Record<MarketCode, CarDetailText> = {
       description: "Požadovaný inzerát už nie je dostupný.",
       back: "Späť na autá",
     },
+    adminPreview: {
+      title: "Administrátorský náhľad",
+      description:
+        "Tento inzerát zatiaľ nie je zverejnený. Kontaktné akcie sú v náhľade vypnuté.",
+    },
     views: (count) => `${count} zobrazení`,
   },
   RO: {
@@ -419,6 +429,11 @@ const CAR_DETAIL_TEXT: Record<MarketCode, CarDetailText> = {
       title: "Anunț negăsit",
       description: "Anunțul solicitat nu mai este disponibil.",
       back: "Înapoi la mașini",
+    },
+    adminPreview: {
+      title: "Previzualizare admin",
+      description:
+        "Acest anunț nu este încă public. Acțiunile de contact sunt dezactivate în previzualizare.",
     },
     views: (count) => `${count} vizualizări`,
   },
@@ -533,9 +548,13 @@ function carDetailReducer(
   }
 }
 
-function useIncrementAdViews(carId: string, initialCar: CarData | null) {
+function useIncrementAdViews(
+  carId: string,
+  initialCar: CarData | null,
+  isAdminPreview: boolean,
+) {
   useEffect(() => {
-    if (!carId || !initialCar) {
+    if (isAdminPreview || !carId || !initialCar) {
       return;
     }
 
@@ -548,18 +567,19 @@ function useIncrementAdViews(carId: string, initialCar: CarData | null) {
         console.error("Error incrementing car views:", error);
       }
     })();
-  }, [carId, initialCar]);
+  }, [carId, initialCar, isAdminPreview]);
 }
 
 function useSavedAdState(
   carId: string,
   userId: string | undefined,
   dispatch: Dispatch<CarDetailAction>,
+  isAdminPreview: boolean,
 ) {
   useEffect(() => {
     let isActive = true;
 
-    if (!userId) {
+    if (isAdminPreview || !userId) {
       dispatch({ type: "set_saved", isSaved: false });
       return () => {
         isActive = false;
@@ -594,14 +614,14 @@ function useSavedAdState(
     return () => {
       isActive = false;
     };
-  }, [carId, userId, dispatch]);
+  }, [carId, userId, dispatch, isAdminPreview]);
 }
 
-function useListingViewTracking(car: CarData | null) {
+function useListingViewTracking(car: CarData | null, isAdminPreview: boolean) {
   const hasTrackedViewRef = useRef(false);
 
   useEffect(() => {
-    if (!car?.id || hasTrackedViewRef.current) {
+    if (isAdminPreview || !car?.id || hasTrackedViewRef.current) {
       return;
     }
 
@@ -610,7 +630,7 @@ function useListingViewTracking(car: CarData | null) {
       source: "direct",
     });
     hasTrackedViewRef.current = true;
-  }, [car]);
+  }, [car, isAdminPreview]);
 }
 
 function useCarDetailShareActions(
@@ -658,6 +678,7 @@ export default function CarDetailClient({
   initialSimilarCars,
   enableViewTransitions,
   breadcrumbItems,
+  isAdminPreview,
 }: CarDetailClientProps) {
   const locale = useLocale();
   const copy = resolveCarDetailCopy(locale);
@@ -701,14 +722,14 @@ export default function CarDetailClient({
     );
   }, []);
   const userId = user?.id;
-  useIncrementAdViews(carId, initialCar);
-  useSavedAdState(carId, userId, dispatch);
-  useListingViewTracking(state.car);
+  useIncrementAdViews(carId, initialCar, isAdminPreview);
+  useSavedAdState(carId, userId, dispatch, isAdminPreview);
+  useListingViewTracking(state.car, isAdminPreview);
 
   const car = state.car;
 
   const handleSaveToggle = async () => {
-    if (!user) {
+    if (isAdminPreview || !user) {
       toast.info(copy.text.saved.loginRequired);
       return;
     }
@@ -736,7 +757,7 @@ export default function CarDetailClient({
   const { handleCopyLink, handleShareLink } = useCarDetailShareActions(car, copy);
 
   const submitMessage = async () => {
-    if (!user) {
+    if (isAdminPreview || !user) {
       toast.info(copy.text.message.loginRequired);
       return;
     }
@@ -800,7 +821,7 @@ export default function CarDetailClient({
   };
 
   const submitReport = async () => {
-    if (!car?.id) {
+    if (isAdminPreview || !car?.id) {
       return;
     }
 
@@ -862,7 +883,7 @@ export default function CarDetailClient({
   };
 
   const handleTogglePhone = () => {
-    if (!state.car) {
+    if (isAdminPreview || !state.car) {
       return;
     }
 
@@ -877,7 +898,7 @@ export default function CarDetailClient({
   };
 
   const handleToggleContactForm = () => {
-    if (!state.car) {
+    if (isAdminPreview || !state.car) {
       return;
     }
 
@@ -937,6 +958,7 @@ export default function CarDetailClient({
       state={state}
       dispatch={dispatch}
       userId={user?.id}
+      isAdminPreview={isAdminPreview}
       enableViewTransitions={enableViewTransitions}
       breadcrumbItems={breadcrumbItems}
       cityCoords={cityCoords}
@@ -970,6 +992,7 @@ function CarDetailView({
   state,
   dispatch,
   userId,
+  isAdminPreview,
   enableViewTransitions,
   breadcrumbItems,
   cityCoords,
@@ -999,6 +1022,7 @@ function CarDetailView({
   state: CarDetailState;
   dispatch: Dispatch<CarDetailAction>;
   userId?: string;
+  isAdminPreview: boolean;
   enableViewTransitions: boolean;
   breadcrumbItems: BreadcrumbTrailItem[];
   cityCoords: { lat: number; lng: number } | null;
@@ -1026,6 +1050,17 @@ function CarDetailView({
   return (
     <main className="pt-4 pb-16 sm:pt-6 sm:pb-18">
       <div className="container-main">
+        {isAdminPreview ? (
+          <div
+            role="status"
+            className="mb-4 rounded-xl border border-accent/30 bg-accent/5 px-4 py-3 text-sm text-text-secondary"
+          >
+            <p className="font-semibold text-text-primary">
+              {copy.text.adminPreview.title}
+            </p>
+            <p className="mt-1">{copy.text.adminPreview.description}</p>
+          </div>
+        ) : null}
         <BreadcrumbTrail items={breadcrumbItems} className="mb-3" />
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
@@ -1043,6 +1078,7 @@ function CarDetailView({
             <CarHeading
               car={car}
               copy={copy}
+              isAdminPreview={isAdminPreview}
               isSaved={state.isSaved}
               onToggleSaved={handleSaveToggle}
               onShare={handleShareLink}
@@ -1105,6 +1141,7 @@ function CarDetailView({
             <ContactSellerCard
               car={car}
               copy={copy}
+              isAdminPreview={isAdminPreview}
               status={{
                 canReport: userId !== car.seller.id,
                 isSendingMessage: state.isSendingMessage,
@@ -1298,6 +1335,7 @@ function CarGallery({
 function CarHeading({
   car,
   copy,
+  isAdminPreview,
   isSaved,
   onToggleSaved,
   onShare,
@@ -1305,6 +1343,7 @@ function CarHeading({
 }: {
   car: CarData;
   copy: ResolvedCarDetailCopy;
+  isAdminPreview: boolean;
   isSaved: boolean;
   onToggleSaved: () => void;
   onShare: () => void;
@@ -1325,28 +1364,30 @@ function CarHeading({
 
       <TooltipProvider delayDuration={120}>
         <div className="flex gap-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                aria-label={
-                  isSaved ? copy.text.heading.removeAria : copy.text.heading.saveAria
-                }
-                onClick={onToggleSaved}
-                className={cn(
-                  "size-10 hit-target rounded-full border border-border-subtle bg-background-secondary/90 flex items-center justify-center transition-colors motion-interruptible",
-                  isSaved
-                    ? "border-error/20 bg-error/10 text-error"
-                    : "hover:border-border-strong",
-                )}
-              >
-                <HeartIcon className={cn("size-5", isSaved && "fill-current text-error")} />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent sideOffset={8}>
-              {isSaved ? copy.text.heading.removeTooltip : copy.text.heading.saveTooltip}
-            </TooltipContent>
-          </Tooltip>
+          {!isAdminPreview ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  aria-label={
+                    isSaved ? copy.text.heading.removeAria : copy.text.heading.saveAria
+                  }
+                  onClick={onToggleSaved}
+                  className={cn(
+                    "size-10 hit-target rounded-full border border-border-subtle bg-background-secondary/90 flex items-center justify-center transition-colors motion-interruptible",
+                    isSaved
+                      ? "border-error/20 bg-error/10 text-error"
+                      : "hover:border-border-strong",
+                  )}
+                >
+                  <HeartIcon className={cn("size-5", isSaved && "fill-current text-error")} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent sideOffset={8}>
+                {isSaved ? copy.text.heading.removeTooltip : copy.text.heading.saveTooltip}
+              </TooltipContent>
+            </Tooltip>
+          ) : null}
 
           <Tooltip>
             <TooltipTrigger asChild>
@@ -1384,6 +1425,7 @@ function CarHeading({
 function ContactSellerCard({
   car,
   copy,
+  isAdminPreview,
   status,
   contactMessage,
   onTogglePhone,
@@ -1399,6 +1441,7 @@ function ContactSellerCard({
 }: {
   car: CarData;
   copy: ResolvedCarDetailCopy;
+  isAdminPreview: boolean;
   status: {
     canReport: boolean;
     isSendingMessage: boolean;
@@ -1439,106 +1482,116 @@ function ContactSellerCard({
         </p>
       )}
 
-      <div className="mt-3 rounded-xl border border-accent/20 bg-accent/5 p-3">
-        <p className="text-xs leading-relaxed text-text-secondary">
-          {copy.text.contact.note}
-        </p>
-      </div>
-
-      <div className="mt-5 space-y-3">
-        <button
-          type="button"
-          onClick={onToggleContactForm}
-          className="btn-primary w-full py-3.5 text-sm font-semibold"
-        >
-          {showContactForm
-            ? copy.text.contact.hideForm
-            : copy.text.contact.writeMessage}
-        </button>
-        <button
-          type="button"
-          onClick={onTogglePhone}
-          className="btn-secondary w-full py-3"
-        >
-          {showPhone
-            ? car.seller.phone || copy.text.contact.phoneNotProvided
-            : copy.text.contact.showPhone}
-        </button>
-        {canReport ? (
-          <button
-            type="button"
-            onClick={onOpenReport}
-            className="btn-secondary w-full py-3"
-          >
-            {copy.text.contact.report}
-          </button>
-        ) : null}
-      </div>
-
-      {!showContactForm ? (
-        <p className="mt-3 text-xs leading-relaxed text-text-secondary">
-          {copy.text.contact.tip}
-        </p>
-      ) : null}
-
-      <ul className="mt-3 space-y-1 text-xs font-medium text-text-tertiary">
-        <li>{copy.text.contact.inbox}</li>
-        <li>{copy.text.contact.antiSpam}</li>
-      </ul>
-
-      {showContactForm && (
-        <div className="mt-6 border-t border-border pt-6">
-          {messageSent ? (
-            <div className="py-4 text-center">
-              <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-success-subtle">
-                <CheckIcon className="size-6 text-success" />
-              </div>
-              <p className="mb-1 font-medium text-text-primary">
-                {copy.text.contact.sentTitle}
-              </p>
-              <p className="text-sm text-text-secondary">
-                {copy.text.contact.sentDescription}
-              </p>
-              <Link
-                href="/moj-ucet?tab=messages"
-                className="btn-secondary mt-3 inline-flex items-center justify-center px-4 py-2 text-sm"
-              >
-                {copy.text.contact.openMessages}
-              </Link>
-            </div>
-          ) : (
-            <form onSubmit={onSubmit}>
-              <textarea
-                rows={5}
-                value={contactMessage}
-                onChange={(event) => onMessageChange(event.target.value)}
-                onKeyDown={onMessageKeyDown}
-                onPaste={onMessagePaste}
-                placeholder={copy.text.contact.placeholder}
-                className="input mb-3 resize-none"
-              />
-              <TurnstileCaptcha
-                key={`car-contact-${captchaInstanceKey}`}
-                onTokenChange={onContactCaptchaTokenChange}
-                action="inquiry_submit"
-                className="mb-3"
-              />
-              <p className="mb-3 text-xs text-text-tertiary">
-                {copy.text.contact.enterHint}
-              </p>
-              <button
-                type="submit"
-                disabled={isSendingMessage || !contactMessage.trim() || !contactCaptchaToken}
-                className="btn-primary flex w-full items-center justify-center gap-2 py-2.5 text-sm disabled:opacity-50"
-              >
-                {isSendingMessage && <SpinnerIcon className="size-4 animate-spin" />}
-                {isSendingMessage
-                  ? copy.text.contact.sending
-                  : copy.text.contact.sendInquiry}
-              </button>
-            </form>
-          )}
+      {isAdminPreview ? (
+        <div className="mt-5 rounded-xl border border-accent/20 bg-accent/5 p-3">
+          <p className="text-xs leading-relaxed text-text-secondary">
+            {copy.text.adminPreview.description}
+          </p>
         </div>
+      ) : (
+        <>
+          <div className="mt-3 rounded-xl border border-accent/20 bg-accent/5 p-3">
+            <p className="text-xs leading-relaxed text-text-secondary">
+              {copy.text.contact.note}
+            </p>
+          </div>
+
+          <div className="mt-5 space-y-3">
+            <button
+              type="button"
+              onClick={onToggleContactForm}
+              className="btn-primary w-full py-3.5 text-sm font-semibold"
+            >
+              {showContactForm
+                ? copy.text.contact.hideForm
+                : copy.text.contact.writeMessage}
+            </button>
+            <button
+              type="button"
+              onClick={onTogglePhone}
+              className="btn-secondary w-full py-3"
+            >
+              {showPhone
+                ? car.seller.phone || copy.text.contact.phoneNotProvided
+                : copy.text.contact.showPhone}
+            </button>
+            {canReport ? (
+              <button
+                type="button"
+                onClick={onOpenReport}
+                className="btn-secondary w-full py-3"
+              >
+                {copy.text.contact.report}
+              </button>
+            ) : null}
+          </div>
+
+          {!showContactForm ? (
+            <p className="mt-3 text-xs leading-relaxed text-text-secondary">
+              {copy.text.contact.tip}
+            </p>
+          ) : null}
+
+          <ul className="mt-3 space-y-1 text-xs font-medium text-text-tertiary">
+            <li>{copy.text.contact.inbox}</li>
+            <li>{copy.text.contact.antiSpam}</li>
+          </ul>
+
+          {showContactForm && (
+            <div className="mt-6 border-t border-border pt-6">
+              {messageSent ? (
+                <div className="py-4 text-center">
+                  <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-success-subtle">
+                    <CheckIcon className="size-6 text-success" />
+                  </div>
+                  <p className="mb-1 font-medium text-text-primary">
+                    {copy.text.contact.sentTitle}
+                  </p>
+                  <p className="text-sm text-text-secondary">
+                    {copy.text.contact.sentDescription}
+                  </p>
+                  <Link
+                    href="/moj-ucet?tab=messages"
+                    className="btn-secondary mt-3 inline-flex items-center justify-center px-4 py-2 text-sm"
+                  >
+                    {copy.text.contact.openMessages}
+                  </Link>
+                </div>
+              ) : (
+                <form onSubmit={onSubmit}>
+                  <textarea
+                    rows={5}
+                    value={contactMessage}
+                    onChange={(event) => onMessageChange(event.target.value)}
+                    onKeyDown={onMessageKeyDown}
+                    onPaste={onMessagePaste}
+                    placeholder={copy.text.contact.placeholder}
+                    className="input mb-3 resize-none"
+                  />
+                  <TurnstileCaptcha
+                    key={`car-contact-${captchaInstanceKey}`}
+                    onTokenChange={onContactCaptchaTokenChange}
+                    action="inquiry_submit"
+                    className="mb-3"
+                  />
+                  <p className="mb-3 text-xs text-text-tertiary">
+                    {copy.text.contact.enterHint}
+                  </p>
+                  <button
+                    type="submit"
+                    disabled={isSendingMessage || !contactMessage.trim() || !contactCaptchaToken}
+                    className="btn-primary flex w-full items-center justify-center gap-2 py-2.5 text-sm disabled:opacity-50"
+                  >
+                    {isSendingMessage && <SpinnerIcon className="size-4 animate-spin" />}
+                    {isSendingMessage
+                      ? copy.text.contact.sending
+                      : copy.text.contact.sendInquiry}
+                  </button>
+                </form>
+              )}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isCurrentUserSiteAdmin } from "@/lib/auth/site-admin";
 import type { MarketCode } from "@/config/markets";
 import { mapCarQueryRowToCarData, type CarData, type CarQueryRow } from "./car-detail";
 
@@ -38,6 +39,46 @@ export async function getPublicCarData(
   if (error || !data) {
     if (error) {
       console.error("Error fetching public car detail:", error);
+    }
+
+    return null;
+  }
+
+  return mapCarQueryRowToCarData(data as CarQueryRow);
+}
+
+export async function getAdminCarPreviewData(
+  id: string,
+  marketCode?: MarketCode,
+): Promise<CarData | null> {
+  if (!AD_ID_REGEX.test(id)) {
+    return null;
+  }
+
+  if (!(await isCurrentUserSiteAdmin())) {
+    return null;
+  }
+
+  const supabase = createAdminClient();
+
+  if (!supabase) {
+    return null;
+  }
+
+  let query = supabase
+    .from("ads")
+    .select(PUBLIC_CAR_DETAIL_SELECT)
+    .eq("id", id);
+
+  if (marketCode) {
+    query = query.eq("market_code", marketCode);
+  }
+
+  const { data, error } = await query.maybeSingle();
+
+  if (error || !data) {
+    if (error) {
+      console.error("Error fetching admin car preview:", error);
     }
 
     return null;

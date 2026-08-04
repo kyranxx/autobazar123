@@ -21,7 +21,10 @@ import {
   buildCarDetailBreadcrumbItems,
   buildCarDetailBreadcrumbSchemaItems,
 } from "@/lib/cars/detail-breadcrumbs";
-import { getPublicCarData } from "@/lib/cars/public-car-detail";
+import {
+  getAdminCarPreviewData,
+  getPublicCarData,
+} from "@/lib/cars/public-car-detail";
 import { type CarData, type SimilarCar } from "@/lib/cars/car-detail";
 import { getMarketPath } from "@/lib/routes";
 
@@ -30,6 +33,12 @@ const getCarData = cache(
     return getPublicCarData(id, marketCode);
   },
 );
+
+type CarDetailSearchParams = Record<string, string | string[] | undefined>;
+
+function isAdminPreviewParam(value: string | string[] | undefined): boolean {
+  return value === "admin";
+}
 
 const getSimilarCars = cache(
   async (
@@ -97,14 +106,20 @@ const getSimilarCars = cache(
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<CarDetailSearchParams>;
 }): Promise<Metadata> {
   const { id } = await params;
   const adId = extractAdIdFromRouteParam(id);
   const market = await getRequestMarketConfig();
   const copy = getPublicMarketCopy(market);
-  const car = await getCarData(adId, market.code);
+  const resolvedSearchParams = await (searchParams ?? Promise.resolve({} as CarDetailSearchParams));
+  const isAdminPreview = isAdminPreviewParam(resolvedSearchParams.preview);
+  const car = isAdminPreview
+    ? await getAdminCarPreviewData(adId, market.code)
+    : await getCarData(adId, market.code);
 
   if (!car) {
     return {
@@ -114,8 +129,11 @@ export async function generateMetadata({
           : "Inzerát nenájdený | AutoNinja",
       description:
         market.code === "RO"
-          ? "Acest anunț nu există sau a fost eliminat."
-          : "Tento inzerát neexistuje alebo bol odstránený.",
+        ? "Acest anunț nu există sau a fost eliminat."
+        : "Tento inzerát neexistuje alebo bol odstránený.",
+      ...(isAdminPreview
+        ? { robots: { index: false, follow: false } }
+        : {}),
     };
   }
 
@@ -131,17 +149,9 @@ export async function generateMetadata({
   const description = `${car.brand} ${car.model}, ${car.year}, ${formatMarketNumber(car.mileage_km, copy)} km, ${fuel}, ${transmission}. ${car.location_city || copy.locationFallback}. ${descriptionAction}`;
 
   const ogImage = normalizeOgImageUrl(car.photos_json?.[0]);
-  return {
+  const metadata: Metadata = {
     title,
     description,
-    alternates: {
-      canonical: `${market.origin}${getMarketPath(buildAdPath({
-        id: car.id,
-        brand: car.brand,
-        model: car.model,
-        year: car.year,
-      }), market.code)}`,
-    },
     openGraph: {
       title,
       description,
@@ -150,18 +160,39 @@ export async function generateMetadata({
       type: "website",
     },
   };
+
+  if (isAdminPreview) {
+    metadata.robots = { index: false, follow: false };
+  } else {
+    metadata.alternates = {
+      canonical: `${market.origin}${getMarketPath(buildAdPath({
+        id: car.id,
+        brand: car.brand,
+        model: car.model,
+        year: car.year,
+      }), market.code)}`,
+    };
+  }
+
+  return metadata;
 }
 
 export default async function CarDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<CarDetailSearchParams>;
 }) {
   const { id } = await params;
   const adId = extractAdIdFromRouteParam(id);
   const market = await getRequestMarketConfig();
   const copy = getPublicMarketCopy(market);
-  const car = await getCarData(adId, market.code);
+  const resolvedSearchParams = await (searchParams ?? Promise.resolve({} as CarDetailSearchParams));
+  const isAdminPreview = isAdminPreviewParam(resolvedSearchParams.preview);
+  const car = isAdminPreview
+    ? await getAdminCarPreviewData(adId, market.code)
+    : await getCarData(adId, market.code);
 
   if (!car) {
     notFound();
@@ -239,6 +270,7 @@ export default async function CarDetailPage({
           initialSimilarCars={similarCars}
           enableViewTransitions={flags.view_transitions ?? true}
           breadcrumbItems={breadcrumbItems}
+          isAdminPreview={isAdminPreview}
         />
       </div>
     </ThemePreviewShell>

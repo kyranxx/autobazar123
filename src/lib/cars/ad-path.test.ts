@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { buildAdPath, extractAdIdFromRouteParam } from "@/lib/cars/ad-path";
+import {
+  buildAdPath,
+  buildAdminPreviewAdPath,
+  extractAdIdFromRouteParam,
+} from "@/lib/cars/ad-path";
 
 describe("ad-path", () => {
   const id = "75573f75-b6c0-458c-adf7-c165e5b32e5e";
@@ -23,5 +27,15 @@ describe("ad-path", () => {
     expect(
       extractAdIdFromRouteParam(`${id}-skoda-octavia-rs-2021`),
     ).toBe(id);
+  });
+
+  it("builds an authenticated admin preview path", () => {
+    expect(
+      buildAdminPreviewAdPath({
+        id,
+        brand: "Volkswagen",
+        model: "Golf Variant",
+      }),
+    ).toBe(`/auto/${id}-volkswagen-golf-variant?preview=admin`);
   });
 });

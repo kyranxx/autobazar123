@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/shadcn/dialog";
 import { Input } from "@/components/ui/shadcn/input";
 import { Skeleton } from "@/components/ui/shadcn/skeleton";
-import { buildAdPath } from "@/lib/cars/ad-path";
+import { buildAdminPreviewAdPath } from "@/lib/cars/ad-path";
 import {
   bulkUpdateAdminListings,
   createAdminListingForUser,
@@ -564,7 +564,7 @@ function ListingRows({
         </thead>
         <tbody>
           {listings.map((listing) => {
-            const adPath = buildAdPath({
+            const adPath = buildAdminPreviewAdPath({
               id: listing.id,
               brand: listing.brand,
               model: listing.model,
