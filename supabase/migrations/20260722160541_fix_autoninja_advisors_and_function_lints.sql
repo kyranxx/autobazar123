@@ -73,7 +73,13 @@ REVOKE ALL ON FUNCTION public.deduct_credits_with_transaction(UUID, INTEGER, TEX
 REVOKE ALL ON FUNCTION public.handle_new_user() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.is_seller_auto_publish_eligible(UUID, TEXT) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.is_stripe_transaction_processed(TEXT) FROM PUBLIC, anon, authenticated;
-REVOKE ALL ON FUNCTION public.rls_auto_enable() FROM PUBLIC, anon, authenticated;
+DO $revoke_optional_rls_helper$
+BEGIN
+  IF to_regprocedure('public.rls_auto_enable()') IS NOT NULL THEN
+    REVOKE ALL ON FUNCTION public.rls_auto_enable() FROM PUBLIC, anon, authenticated;
+  END IF;
+END;
+$revoke_optional_rls_helper$;
 REVOKE ALL ON FUNCTION public.dealer_apply_bulk_action(TEXT, UUID[]) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.publish_ad_with_credits(JSONB) FROM PUBLIC, anon, authenticated;
 
