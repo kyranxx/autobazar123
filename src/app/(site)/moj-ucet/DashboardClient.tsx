@@ -6,12 +6,8 @@ import {
   useCallback,
   useMemo,
   useReducer,
-  type FormEventHandler,
   type KeyboardEvent,
 } from "react";
-import { useForm } from "react-hook-form";
-import type { FieldErrors, UseFormRegister, UseFormRegisterReturn } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useAuth } from "@/context/AuthContext";
@@ -28,11 +24,6 @@ import { createCsrfHeaders } from "@/lib/security/client-csrf";
 import { trackAnalyticsEvent } from "@/lib/analytics/client";
 import { CREATE_LISTING_ROUTE } from "@/lib/routes";
 import {
-  createQuickEditFormSchema,
-  type QuickEditFormData,
-  type QuickEditFormInput,
-} from "@/lib/validation/listings";
-import {
   mapInquiriesToConversations,
   type InquiryRow,
 } from "@/lib/inquiries/conversations";
@@ -43,17 +34,15 @@ import {
   ClockIcon,
   HeartIcon,
   CarIcon,
+  XIcon,
 } from "@/components/ui/Icons";
 import TurnstileCaptcha from "@/components/security/TurnstileCaptcha";
-import { SavedSearchesPanel } from "@/components/account/SavedSearchesPanel";
-import { ModerationEmailPreference } from "@/components/account/ModerationEmailPreference";
 import {
   AdsIcon,
   SavedIcon,
   MessagesIcon,
   SettingsIcon,
 } from "@/components/ui/DashboardIcons";
-import type { ListingActionOperation } from "@/lib/pricing/config";
 import { useMarket, useMarketCode } from "@/context/MarketContext";
 
 const EmbeddedAdWizard = dynamic(() => import("../pridat-inzerat/AdWizardClient"), {
@@ -101,23 +90,13 @@ interface UserAd {
 }
 
 type MyAdsTabUiState = {
-  actionLoading: string | null;
   deleteAd: UserAd | null;
   deleteLoading: boolean;
-  editingAd: UserAd | null;
-  isSavingEdit: boolean;
-  featureLoadingKey: string | null;
-  resubmitLoading: string | null;
 };
 
 const initialMyAdsTabUiState: MyAdsTabUiState = {
-  actionLoading: null,
   deleteAd: null,
   deleteLoading: false,
-  editingAd: null,
-  isSavingEdit: false,
-  featureLoadingKey: null,
-  resubmitLoading: null,
 };
 
 function myAdsTabUiReducer(
@@ -221,23 +200,6 @@ function getAccountInlineCopy(locale: string) {
         freeListingBanner: "Anunț acum gratuit. Premium {premium}. Exclusive {top}.",
         submittedForApproval: "Anunțul a fost trimis pentru aprobare.",
         listingSaved: "Anunțul a fost salvat.",
-        paymentCreateFailed: "Plata nu a putut fi creată.",
-        listingUpdated: "Anunțul a fost actualizat.",
-        resubmitFailed: "Anunțul nu a putut fi retrimis.",
-        republished: "Anunțul a fost republicat.",
-        resubmitted: "Anunțul a fost retrimis pentru aprobare.",
-        resendForApproval: "Retrimite pentru aprobare",
-        extendListing: "Prelungește",
-        quickEdit: "Editare rapidă",
-        quickEditListing: "Editare rapidă a anunțului",
-        quickEditHelp: "Modificați doar prețul, kilometrajul și descrierea.",
-        invalidPrice: "Introduceți un preț valid.",
-        invalidMileage: "Introduceți un kilometraj valid.",
-        invalidDescription: "Descrierea este prea lungă.",
-        priceEur: "Preț (EUR)",
-        mileage: "Kilometraj",
-        description: "Descriere",
-        cancel: "Anulează",
         wholeMarket: "România",
         backTo: "Înapoi la",
         adId: "ID anunț",
@@ -260,33 +222,12 @@ function getAccountInlineCopy(locale: string) {
         deleteFailed: "Mesajul nu a putut fi șters.",
         messageDeleted: "Mesajul a fost șters.",
         leadUpdateFailed: "Calitatea leadului nu a putut fi modificată.",
-        moderationEmailAria: "E-mail la aprobarea sau respingerea anunțului",
-        moderationEmailTitle: "E-mail la aprobarea sau respingerea anunțului",
-        moderationEmailHelp:
-          "Când moderarea schimbă starea anunțului, vă trimitem un e-mail cu rezultatul.",
       }
     : {
         myAccountKicker: "Môj účet",
         freeListingBanner: "Inzerát teraz zdarma. Premium {premium}. Exclusive {top}.",
         submittedForApproval: "Inzerát bol odoslaný na schválenie.",
         listingSaved: "Inzerát bol uložený.",
-        paymentCreateFailed: "Nepodarilo sa vytvoriť platbu.",
-        listingUpdated: "Inzerát bol aktualizovaný.",
-        resubmitFailed: "Nepodarilo sa znovu odoslať inzerát.",
-        republished: "Inzerát bol znovu publikovaný.",
-        resubmitted: "Inzerát bol znovu odoslaný na schválenie.",
-        resendForApproval: "Odoslať znova na schválenie",
-        extendListing: "Predĺžiť",
-        quickEdit: "Rýchla úprava",
-        quickEditListing: "Rýchla úprava inzerátu",
-        quickEditHelp: "Upravte iba cenu, kilometre a popis.",
-        invalidPrice: "Zadajte platnú cenu.",
-        invalidMileage: "Zadajte platný počet kilometrov.",
-        invalidDescription: "Popis je príliš dlhý.",
-        priceEur: "Cena (EUR)",
-        mileage: "Kilometre",
-        description: "Popis",
-        cancel: "Zrušiť",
         wholeMarket: "Slovensko",
         backTo: "Späť na",
         adId: "ID inzerátu",
@@ -309,10 +250,6 @@ function getAccountInlineCopy(locale: string) {
         deleteFailed: "Nepodarilo sa vymazať správu.",
         messageDeleted: "Správa bola vymazaná.",
         leadUpdateFailed: "Nepodarilo sa upraviť kvalitu leadu.",
-        moderationEmailAria: "Email pri schválení alebo zamietnutí inzerátu",
-        moderationEmailTitle: "Email pri schválení alebo zamietnutí inzerátu",
-        moderationEmailHelp:
-          "Keď moderácia zmení stav vášho inzerátu, pošleme vám email s výsledkom.",
       };
 }
 
@@ -700,7 +637,6 @@ function useDashboardClientView({
               ads={adsState.userAds}
               isLoading={adsState.adsLoading}
               onRefresh={loadUserAds}
-              pricingSummary={pricingSummary}
             />
           )}
           {activeTab === "create" && (
@@ -844,11 +780,6 @@ type MyAdsTabProps = {
   ads: UserAd[];
   isLoading: boolean;
   onRefresh: () => void;
-  pricingSummary: {
-    prolong: string;
-    premium: string;
-    top: string;
-  };
 };
 
 function MyAdsTab(props: MyAdsTabProps) {
@@ -859,48 +790,20 @@ function useMyAdsTabView({
   ads,
   isLoading,
   onRefresh,
-  pricingSummary,
 }: MyAdsTabProps) {
-  const { user } = useAuth();
   const [myAdsUiState, updateMyAdsUiState] = useReducer(
     myAdsTabUiReducer,
     initialMyAdsTabUiState,
   );
   const {
-    actionLoading,
     deleteAd,
     deleteLoading,
-    editingAd,
-    isSavingEdit,
-    featureLoadingKey,
-    resubmitLoading,
   } = myAdsUiState;
   const t = useTranslations("dashboard");
   const tCommon = useTranslations("common");
   const tErrors = useTranslations("errors");
   const locale = useLocale();
   const localeTag = getLocaleTag(locale);
-  const inlineCopy = useMemo(() => getAccountInlineCopy(locale), [locale]);
-  const quickEditForm = useForm<QuickEditFormInput, unknown, QuickEditFormData>({
-    resolver: zodResolver(
-      createQuickEditFormSchema({
-        invalidPrice: inlineCopy.invalidPrice,
-        invalidMileage: inlineCopy.invalidMileage,
-        invalidDescription: inlineCopy.invalidDescription,
-      }),
-    ),
-    defaultValues: {
-      priceEur: "",
-      mileageKm: "",
-      description: "",
-    },
-  });
-  const {
-    register: registerQuickEditField,
-    handleSubmit: handleQuickEditSubmit,
-    reset: resetQuickEditForm,
-    formState: { errors: quickEditErrors },
-  } = quickEditForm;
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -925,124 +828,6 @@ function useMyAdsTabView({
       (new Date(dateStr).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
     );
     return days > 0 ? days : 0;
-  };
-
-  const openQuickEdit = (ad: UserAd) => {
-    updateMyAdsUiState({ editingAd: ad });
-  };
-
-  useEffect(() => {
-    if (!editingAd) {
-      resetQuickEditForm({
-        priceEur: "",
-        mileageKm: "",
-        description: "",
-      });
-      return;
-    }
-
-    resetQuickEditForm({
-      priceEur: String(editingAd.price_eur ?? ""),
-      mileageKm:
-        typeof editingAd.mileage_km === "number"
-          ? String(editingAd.mileage_km)
-          : "",
-      description: editingAd.description ?? "",
-    });
-  }, [editingAd, resetQuickEditForm]);
-
-  const closeQuickEdit = () => {
-    if (isSavingEdit) return;
-    updateMyAdsUiState({ editingAd: null });
-    resetQuickEditForm({
-      priceEur: "",
-      mileageKm: "",
-      description: "",
-    });
-  };
-
-  const submitQuickEdit = handleQuickEditSubmit(async (values) => {
-    if (!editingAd || !user?.id) return;
-
-    updateMyAdsUiState({ isSavingEdit: true });
-    try {
-      const response = await fetch("/api/account/ads", {
-        method: "PATCH",
-        headers: createCsrfHeaders({
-          "Content-Type": "application/json",
-        }),
-        body: JSON.stringify({
-          mode: "quick",
-          quickEdit: {
-            adId: editingAd.id,
-            priceEur: values.priceEur,
-            mileageKm: values.mileageKm,
-            description: values.description,
-          },
-        }),
-      });
-
-      await response.json().catch(() => null);
-
-      if (!response.ok) {
-        toast.error(tErrors("generic"));
-        return;
-      }
-
-      toast.success(tCommon("saved"));
-      closeQuickEdit();
-      onRefresh();
-    } catch (error) {
-      console.error("Quick edit failed:", error);
-      toast.error(tErrors("generic"));
-    } finally {
-      updateMyAdsUiState({ isSavingEdit: false });
-    }
-  });
-
-  const handleMarkAsSold = async (adId: string) => {
-    updateMyAdsUiState({ actionLoading: adId });
-    try {
-      const response = await fetch("/api/account/ads/mark-sold", {
-        method: "POST",
-        headers: createCsrfHeaders({
-          "Content-Type": "application/json",
-        }),
-        body: JSON.stringify({ adId }),
-      });
-
-      const payload = (await response.json().catch(() => null)) as
-        | {
-            error?: string;
-            adId?: string;
-            sellerType?: "private" | "dealer";
-            confirmationMethod?: "seller_dashboard_manual";
-          }
-        | null;
-
-      if (!response.ok) {
-        toast.error(payload?.error || tErrors("generic"));
-        return;
-      }
-
-      trackAnalyticsEvent("listing_marked_sold", {
-        adId,
-        markedVia: "dashboard",
-      });
-      if (payload?.sellerType && payload?.confirmationMethod) {
-        trackAnalyticsEvent("sale_confirmed", {
-          adId,
-          sellerType: payload.sellerType,
-          confirmationMethod: payload.confirmationMethod,
-        });
-      }
-      onRefresh();
-    } catch (err) {
-      console.error("Error marking as sold:", err);
-      toast.error(tErrors("generic"));
-    } finally {
-      updateMyAdsUiState({ actionLoading: null });
-    }
   };
 
   const closeDeleteAd = () => {
@@ -1081,139 +866,6 @@ function useMyAdsTabView({
       toast.error(tErrors("generic"));
     } finally {
       updateMyAdsUiState({ deleteLoading: false });
-    }
-  };
-
-  const parsePriceValue = useCallback((label: string) => {
-    const match = label.replace(",", ".").match(/(\d+(?:\.\d+)?)/);
-    return match ? Number(match[1]) : 0;
-  }, []);
-
-  const handleFeatureAction = useCallback(
-    async (adId: string, operation: ListingActionOperation) => {
-      if (!user?.id) return;
-
-      const loadingKey = `${adId}:${operation}`;
-      updateMyAdsUiState({ featureLoadingKey: loadingKey });
-
-      try {
-        const response = await fetch("/api/account/ads/apply-action", {
-          method: "POST",
-          headers: createCsrfHeaders({
-            "Content-Type": "application/json",
-          }),
-          body: JSON.stringify({ adId, operation }),
-        });
-
-        const payload = (await response.json().catch(() => null)) as
-          | {
-              ok?: boolean;
-              error?: string;
-              checkoutRequired?: boolean;
-              operation?: ListingActionOperation;
-            }
-          | null;
-
-        if (!response.ok || !payload?.ok) {
-          toast.error(payload?.error || tErrors("generic"));
-          return;
-        }
-
-        if (payload.checkoutRequired && payload.operation) {
-          const idempotencyKey =
-            typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-              ? crypto.randomUUID()
-              : `checkout-${payload.operation}-${Date.now()}`;
-
-          const checkoutResponse = await fetch("/api/stripe/checkout", {
-            method: "POST",
-            headers: createCsrfHeaders({
-              "Content-Type": "application/json",
-              "idempotency-key": idempotencyKey,
-            }),
-            body: JSON.stringify({
-              type: "private_listing_action",
-              adId,
-              operation: payload.operation,
-            }),
-          });
-
-          const checkoutPayload = (await checkoutResponse.json().catch(() => null)) as
-            | { error?: string; url?: string }
-            | null;
-
-          if (!checkoutResponse.ok || !checkoutPayload?.url) {
-            toast.error(checkoutPayload?.error || inlineCopy.paymentCreateFailed);
-            return;
-          }
-
-          window.location.href = checkoutPayload.url;
-          return;
-        }
-
-        if (operation === "prolong_premium" || operation === "prolong_top") {
-          trackAnalyticsEvent("listing_feature_purchased", {
-            adId,
-            featureType: operation === "prolong_top" ? "exclusive" : "premium",
-            purchaseSurface: "account_dashboard",
-            valueEur:
-              operation === "prolong_top"
-                ? parsePriceValue(pricingSummary.top)
-                : parsePriceValue(pricingSummary.premium),
-          });
-        }
-
-        toast.success(inlineCopy.listingUpdated);
-        onRefresh();
-      } catch (err) {
-        console.error("Error applying listing action:", err);
-        toast.error(tErrors("generic"));
-      } finally {
-        updateMyAdsUiState({ featureLoadingKey: null });
-      }
-    },
-    [inlineCopy, onRefresh, parsePriceValue, pricingSummary.premium, pricingSummary.top, tErrors, user?.id],
-  );
-
-  const handleResubmitForApproval = async (ad: UserAd) => {
-    updateMyAdsUiState({ resubmitLoading: ad.id });
-    try {
-      const response = await fetch("/api/account/ads/resubmit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ adId: ad.id }),
-      });
-
-      const payload = (await response.json().catch(() => null)) as
-        | { error?: string; status?: "active" | "pending" }
-        | null;
-
-      if (!response.ok) {
-        toast.error(payload?.error || inlineCopy.resubmitFailed);
-        return;
-      }
-
-      const listingLifecyclePayload = {
-        adId: ad.id,
-        photosCount: ad.photos_json?.length || 0,
-        brand: getBrandName(ad) || undefined,
-        model: getModelName(ad) || undefined,
-        locationCity: ad.location_city || undefined,
-      };
-
-      if (payload?.status === "active") {
-        trackAnalyticsEvent("listing_published", listingLifecyclePayload);
-        toast.success(inlineCopy.republished);
-      } else {
-        trackAnalyticsEvent("listing_submitted", listingLifecyclePayload);
-        toast.success(inlineCopy.resubmitted);
-      }
-
-      onRefresh();
-    } catch {
-      toast.error(inlineCopy.resubmitFailed);
-    } finally {
-      updateMyAdsUiState({ resubmitLoading: null });
     }
   };
 
@@ -1283,7 +935,6 @@ function useMyAdsTabView({
 
   return (
     <div>
-      <ModerationEmailPreference />
       {ads.length === 0 ? (
         <div className="market-panel mx-auto max-w-xl p-8 text-center sm:p-10">
           <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl border border-primary/12 bg-primary/5 text-primary">
@@ -1306,7 +957,6 @@ function useMyAdsTabView({
           {ads.map((ad, index) => {
             const status = getStatusBadge(ad.status);
             const daysRemaining = getDaysRemaining(ad.expires_at);
-            const isActionLoading = actionLoading === ad.id;
             const adPath = buildAdPath({
               id: ad.id,
               brand: getBrandName(ad),
@@ -1409,120 +1059,11 @@ function useMyAdsTabView({
                   <div className="flex flex-wrap gap-2 pt-1">
                     <Link
                       href={`/upravit-inzerat/${ad.id}`}
-                      className="market-action-secondary min-h-10 px-3 py-1.5 text-sm"
+                      className="market-action-secondary min-h-11 px-4 py-2 text-sm"
                       onClick={(e) => e.stopPropagation()}
                     >
                       {tCommon("edit")}
                     </Link>
-                    <button
-                      type="button"
-                      onPointerDown={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        openQuickEdit(ad);
-                      }}
-                      className="market-action-secondary min-h-10 px-3 py-1.5 text-sm"
-                    >
-                      {inlineCopy.quickEdit}
-                    </button>
-                    {ad.status === "active" && (
-                      <>
-                        <button
-                          type="button"
-                          onPointerDown={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                          }}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            void handleFeatureAction(ad.id, "prolong_top");
-                          }}
-                          disabled={featureLoadingKey === `${ad.id}:prolong_top`}
-                          className="market-action-primary min-h-10 px-3 py-1.5 text-sm disabled:opacity-50"
-                        >
-                          {featureLoadingKey === `${ad.id}:prolong_top`
-                            ? t("saving")
-                            : `Exclusive ${pricingSummary.top}`}
-                        </button>
-                        <button
-                          type="button"
-                          onPointerDown={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                          }}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            void handleFeatureAction(ad.id, "prolong_premium");
-                          }}
-                          disabled={featureLoadingKey === `${ad.id}:prolong_premium`}
-                          className="market-action-secondary min-h-10 border-warning bg-warning/10 px-3 py-1.5 text-sm disabled:opacity-50"
-                        >
-                          {featureLoadingKey === `${ad.id}:prolong_premium`
-                            ? t("saving")
-                            : `Premium ${pricingSummary.premium}`}
-                        </button>
-                        <button
-                          type="button"
-                          onPointerDown={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                          }}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            void handleFeatureAction(ad.id, "prolong_basic");
-                          }}
-                          disabled={featureLoadingKey === `${ad.id}:prolong_basic`}
-                          className="market-action-secondary min-h-10 px-3 py-1.5 text-sm disabled:opacity-50"
-                        >
-                          {featureLoadingKey === `${ad.id}:prolong_basic`
-                            ? t("saving")
-                            : `${inlineCopy.extendListing} ${pricingSummary.prolong}`}
-                        </button>
-                        <button
-                          type="button"
-                          onPointerDown={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                          }}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            void handleMarkAsSold(ad.id);
-                          }}
-                          disabled={isActionLoading}
-                          className="market-action-primary min-h-10 px-3 py-1.5 text-sm disabled:opacity-50"
-                        >
-                          {isActionLoading ? t("saving") : t("markAsSold")}
-                        </button>
-                      </>
-                    )}
-                    {ad.status === "rejected" && (
-                      <button
-                        type="button"
-                        onPointerDown={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                        }}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          void handleResubmitForApproval(ad);
-                        }}
-                        disabled={resubmitLoading === ad.id}
-                        className="market-action-secondary min-h-10 border-warning bg-warning/10 px-3 py-1.5 text-sm disabled:opacity-50"
-                      >
-                        {resubmitLoading === ad.id
-                          ? inlineCopy.sending
-                          : inlineCopy.resendForApproval}
-                      </button>
-                    )}
                     <button
                       type="button"
                       data-testid={`listing-delete-${ad.id}`}
@@ -1535,7 +1076,7 @@ function useMyAdsTabView({
                         e.stopPropagation();
                         updateMyAdsUiState({ deleteAd: ad });
                       }}
-                      className="market-action-secondary min-h-10 border-error/40 bg-error/5 px-3 py-1.5 text-sm text-error hover:bg-error/10"
+                      className="market-action-secondary min-h-11 px-4 py-2 text-sm border-error/40 bg-error/5 text-error hover:bg-error/10"
                     >
                       {t("deleteListing")}
                     </button>
@@ -1547,17 +1088,6 @@ function useMyAdsTabView({
         </div>
       )}
 
-      <QuickEditAdModal
-        isOpen={!!editingAd}
-        isSaving={isSavingEdit}
-        errors={quickEditErrors}
-        onClose={closeQuickEdit}
-        onSubmit={submitQuickEdit}
-        registerField={registerQuickEditField}
-        saveLabel={tCommon("save")}
-        savingLabel={t("saving")}
-        inlineCopy={inlineCopy}
-      />
       <DeleteAdModal
         isOpen={!!deleteAd}
         isDeleting={deleteLoading}
@@ -1632,128 +1162,6 @@ function DeleteAdModal({
   );
 }
 
-function QuickEditAdModal({
-  isOpen,
-  isSaving,
-  errors,
-  onClose,
-  onSubmit,
-  registerField,
-  saveLabel,
-  savingLabel,
-  inlineCopy,
-}: {
-  isOpen: boolean;
-  isSaving: boolean;
-  errors: FieldErrors<QuickEditFormInput>;
-  onClose: () => void;
-  onSubmit: FormEventHandler<HTMLFormElement>;
-  registerField: UseFormRegister<QuickEditFormInput>;
-  saveLabel: string;
-  savingLabel: string;
-  inlineCopy: ReturnType<typeof getAccountInlineCopy>;
-}) {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-      <button
-        type="button"
-        className="absolute inset-0 bg-black/45"
-        onClick={onClose}
-        aria-label={inlineCopy.quickEdit}
-      />
-      <div className="relative z-[121] w-full max-w-lg rounded-2xl border border-border bg-background p-5 shadow-xl sm:p-6">
-        <h3 className="text-lg font-semibold text-primary">{inlineCopy.quickEditListing}</h3>
-        <p className="mt-1 text-sm text-secondary">{inlineCopy.quickEditHelp}</p>
-        <form onSubmit={onSubmit} className="mt-4 space-y-4">
-          <QuickEditNumberField
-            id="quick-edit-price"
-            label={inlineCopy.priceEur}
-            min={1}
-            required
-            registration={registerField("priceEur")}
-            error={errors.priceEur?.message}
-          />
-          <QuickEditNumberField
-            id="quick-edit-mileage"
-            label={inlineCopy.mileage}
-            min={0}
-            registration={registerField("mileageKm")}
-            error={errors.mileageKm?.message}
-          />
-          <div>
-            <label htmlFor="quick-edit-description" className="mb-1 block text-sm font-medium text-primary">
-              {inlineCopy.description}
-            </label>
-            <textarea
-              id="quick-edit-description"
-              {...registerField("description")}
-              rows={4}
-              maxLength={4000}
-              className="w-full rounded-lg border border-border px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent/30"
-            />
-            {errors.description ? (
-              <p className="mt-1 text-xs text-error">{errors.description.message}</p>
-            ) : null}
-          </div>
-          <div className="flex items-center justify-end gap-2 pt-1">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isSaving}
-              className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-background-muted disabled:opacity-60"
-            >
-              {inlineCopy.cancel}
-            </button>
-            <button
-              type="submit"
-              disabled={isSaving}
-              className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-hover disabled:opacity-60"
-            >
-              {isSaving ? savingLabel : saveLabel}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-function QuickEditNumberField({
-  id,
-  label,
-  min,
-  required = false,
-  registration,
-  error,
-}: {
-  id: string;
-  label: string;
-  min: number;
-  required?: boolean;
-  registration: UseFormRegisterReturn;
-  error?: string;
-}) {
-  return (
-    <div>
-      <label htmlFor={id} className="mb-1 block text-sm font-medium text-primary">
-        {label}
-      </label>
-      <input
-        id={id}
-        type="number"
-        min={min}
-        step={1}
-        {...registration}
-        className="h-10 w-full rounded-lg border border-border px-3 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent/30"
-        required={required}
-      />
-      {error ? <p className="mt-1 text-xs text-error">{error}</p> : null}
-    </div>
-  );
-}
-
 function CreateListingTab({
   vinDecodingEnabled = false,
 }: {
@@ -1763,6 +1171,48 @@ function CreateListingTab({
     <section>
       <EmbeddedAdWizard embedded vinDecodingEnabled={vinDecodingEnabled} />
     </section>
+  );
+}
+
+function SavedAlertCheckbox({
+  id,
+  title,
+  description,
+  checked,
+  disabled,
+  onChange,
+}: {
+  id: string;
+  title: string;
+  description: string;
+  checked: boolean;
+  disabled: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  const descriptionId = `${id}-description`;
+
+  return (
+    <label
+      htmlFor={id}
+      className="flex cursor-pointer items-start justify-between gap-4 rounded-xl border border-border bg-background-muted/60 px-3 py-3 transition-colors hover:border-primary/25 has-[:focus-visible]:border-accent has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent/25"
+    >
+      <span className="min-w-0">
+        <span className="block text-sm font-semibold text-primary">{title}</span>
+        <span id={descriptionId} className="mt-0.5 block text-xs leading-5 text-secondary">
+          {description}
+        </span>
+      </span>
+      <input
+        id={id}
+        name={id}
+        type="checkbox"
+        className="mt-0.5 size-5 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
+        checked={checked}
+        disabled={disabled}
+        aria-describedby={descriptionId}
+        onChange={(event) => onChange(event.target.checked)}
+      />
+    </label>
   );
 }
 
@@ -2130,36 +1580,9 @@ function useSavedTabView({
   const derivedSavedAds = useMemo(() => {
     return savedState.savedAds.map((ad) => {
       const preference = savedState.preferences[ad.id] || createDefaultPreference(ad);
-      const baselinePrice =
-        typeof preference.baseline_price_eur === "number"
-          ? preference.baseline_price_eur
-          : ad.price_eur;
-      const priceDropAmount =
-        baselinePrice && ad.price_eur < baselinePrice ? baselinePrice - ad.price_eur : 0;
-      const hasPriceDropSignal =
-        preference.notify_price_drop && !preference.paused && priceDropAmount > 0;
-      const hasStatusChangeSignal =
-        preference.notify_status_change &&
-        !preference.paused &&
-        Boolean(preference.baseline_status) &&
-        preference.baseline_status !== ad.status;
-
-      return {
-        ad,
-        preference,
-        priceDropAmount,
-        hasPriceDropSignal,
-        hasStatusChangeSignal,
-      };
+      return { ad, preference };
     });
   }, [createDefaultPreference, savedState.preferences, savedState.savedAds]);
-
-  const signalSummary = useMemo(() => {
-    const priceDrops = derivedSavedAds.filter((row) => row.hasPriceDropSignal).length;
-    const statusChanges = derivedSavedAds.filter((row) => row.hasStatusChangeSignal).length;
-    const paused = derivedSavedAds.filter((row) => row.preference.paused).length;
-    return { priceDrops, statusChanges, paused };
-  }, [derivedSavedAds]);
 
   if (savedState.isLoading) {
     return (
@@ -2203,75 +1626,46 @@ function useSavedTabView({
 
   return (
     <div>
-      <div className="mb-6 rounded-xl border border-primary/10 bg-primary/5 p-4 sm:p-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h3 className="text-lg font-semibold text-primary">
-              {t("savedAds")} ({savedState.savedAds.length})
-            </h3>
-            <p className="text-sm text-secondary">{t("savedAlertsDescription")}</p>
+      <div className="mb-6 rounded-2xl border border-primary/10 bg-primary/5 p-4 sm:p-5">
+        <div>
+          <div className="flex items-baseline justify-between gap-3">
+            <h3 className="text-lg font-semibold text-primary">{t("savedAds")}</h3>
+            <span className="rounded-full bg-background px-3 py-1 text-sm font-semibold text-primary">
+              {savedState.savedAds.length}
+            </span>
           </div>
-          <div className="grid grid-cols-3 gap-2 sm:gap-3 text-xs sm:text-sm">
-            <div className="rounded-xl bg-background-muted px-3 py-2 text-center">
-              <p className="font-semibold text-primary">{signalSummary.priceDrops}</p>
-              <p className="text-tertiary">{t("priceDropped")}</p>
-            </div>
-            <div className="rounded-xl bg-background-muted px-3 py-2 text-center">
-              <p className="font-semibold text-primary">{signalSummary.statusChanges}</p>
-              <p className="text-tertiary">{t("statusChanged")}</p>
-            </div>
-            <div className="rounded-xl bg-background-muted px-3 py-2 text-center">
-              <p className="font-semibold text-primary">{signalSummary.paused}</p>
-              <p className="text-tertiary">{t("alertsPaused")}</p>
-            </div>
-          </div>
+          <p className="mt-1 text-sm text-secondary">{t("savedAlertsDescription")}</p>
         </div>
 
         {!savedState.alertsSupported && (
           <p className="mt-4 text-sm text-warning">{t("alertsUnavailable")}</p>
         )}
 
-        <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-          <button
-            type="button"
-            onClick={() => {
-              void applyPreferenceToAll({ paused: true });
-            }}
-            disabled={!savedState.alertsSupported || savedState.isBulkUpdating}
-            className="market-action-primary px-3 py-2 text-sm disabled:opacity-50"
-          >
-            {t("pauseAllAlerts")}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              void applyPreferenceToAll({ paused: false });
-            }}
-            disabled={!savedState.alertsSupported || savedState.isBulkUpdating}
-            className="market-action-secondary border-primary bg-primary px-3 py-2 text-sm text-white disabled:opacity-50"
-          >
-            {t("resumeAllAlerts")}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              void applyPreferenceToAll({ notify_email: true, notify_push: false });
-            }}
-            disabled={!savedState.alertsSupported || savedState.isBulkUpdating}
-            className="market-action-primary px-3 py-2 text-sm disabled:opacity-50"
-          >
-            {t("notifyByEmail")}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              void applyPreferenceToAll({ notify_email: false, notify_push: true });
-            }}
-            disabled={!savedState.alertsSupported || savedState.isBulkUpdating}
-            className="market-action-secondary border-primary bg-primary px-3 py-2 text-sm text-white disabled:opacity-50"
-          >
-            {t("notifyByPush")}
-          </button>
+        <div className="mt-5 border-t border-primary/10 pt-4">
+          <h4 className="text-sm font-semibold text-primary">{t("bulkAlertsTitle")}</h4>
+          <p className="mt-1 text-xs text-secondary">{t("bulkAlertsDescription")}</p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => {
+                void applyPreferenceToAll({ paused: true });
+              }}
+              disabled={!savedState.alertsSupported || savedState.isBulkUpdating}
+              className="market-action-secondary min-h-11 px-4 py-2 text-sm disabled:opacity-50"
+            >
+              {t("pauseAllAlerts")}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                void applyPreferenceToAll({ paused: false });
+              }}
+              disabled={!savedState.alertsSupported || savedState.isBulkUpdating}
+              className="market-action-primary min-h-11 px-4 py-2 text-sm disabled:opacity-50"
+            >
+              {t("resumeAllAlerts")}
+            </button>
+          </div>
         </div>
 
         {savedState.isBulkUpdating && (
@@ -2280,8 +1674,7 @@ function useSavedTabView({
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {derivedSavedAds.map(
-          ({ ad, preference, priceDropAmount, hasPriceDropSignal, hasStatusChangeSignal }) => (
+        {derivedSavedAds.map(({ ad, preference }) => (
             <div
               key={ad.id}
               className="market-card overflow-hidden bg-background"
@@ -2304,7 +1697,7 @@ function useSavedTabView({
                 />
               </Link>
               <div className="p-4">
-                <div className="flex items-start justify-between gap-2">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <Link
                     href={buildAdPath({
                       id: ad.id,
@@ -2312,41 +1705,34 @@ function useSavedTabView({
                       model: getModelName(ad),
                       year: ad.year,
                     })}
-                    className="font-semibold text-primary hover:text-accent transition-colors"
+                    className="font-semibold text-primary transition-colors hover:text-accent"
                   >
                     {getBrandName(ad)} {getModelName(ad)}
                   </Link>
                   <button
+                    type="button"
                     onClick={(e) => handleUnsaveClick(e, ad.id)}
-                    className="rounded-full border border-border px-2 py-1 text-xs font-semibold text-error hover:bg-error/10 transition-colors"
+                    className="inline-flex min-h-11 w-full shrink-0 items-center justify-center gap-2 rounded-xl border border-error/35 bg-error/5 px-3.5 py-2 text-sm font-semibold text-error transition-colors hover:bg-error/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error/40 sm:w-auto"
                     title={t("removeFromSaved")}
                   >
+                    <XIcon className="size-4" aria-hidden="true" />
                     {t("removeFromSaved")}
                   </button>
                 </div>
-                <p className="text-sm text-secondary mt-1">
-                  {ad.year} - {ad.mileage_km?.toLocaleString(localeTag)} km - {ad.location_city || inlineCopy.wholeMarket}
+                <p className="mt-2 text-sm text-secondary">
+                  {[ad.year, ad.mileage_km ? `${ad.mileage_km.toLocaleString(localeTag)} km` : null, ad.location_city || inlineCopy.wholeMarket]
+                    .filter(Boolean)
+                    .join(" • ")}
                 </p>
-                <div className="mt-2 flex items-center gap-2">
-                  <span className="text-xl font-bold text-accent">{ad.price_eur?.toLocaleString(localeTag)} EUR</span>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <span className="text-xl font-bold text-accent">
+                    {ad.price_eur?.toLocaleString(localeTag)} EUR
+                  </span>
                   <span className="inline-flex items-center rounded-full bg-background-muted px-2 py-0.5 text-xs font-medium text-secondary">
                     {getStatusLabel(ad.status)}
                   </span>
                 </div>
-                <p className="text-xs text-tertiary mt-2">{getFuelLabel(ad.fuel || "")}</p>
-
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {hasPriceDropSignal && (
-                    <span className="inline-flex items-center rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success">
-                      {t("priceDropped")}: -{Math.round(priceDropAmount).toLocaleString(localeTag)} EUR
-                    </span>
-                  )}
-                  {hasStatusChangeSignal && (
-                    <span className="inline-flex items-center rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning">
-                      {t("statusChanged")}
-                    </span>
-                  )}
-                </div>
+                <p className="mt-2 text-xs text-tertiary">{getFuelLabel(ad.fuel || "")}</p>
 
                 <div className="mt-4 rounded-xl border border-border-strong bg-background p-3">
                   <div className="flex items-center justify-between gap-3">
@@ -2363,84 +1749,56 @@ function useSavedTabView({
                       {preference.paused ? t("alertsPaused") : t("active")}
                     </span>
                   </div>
-                  <p className="mt-1 text-[11px] text-secondary">
-                    {t("baselineAtSave")}: {preference.baseline_price_eur?.toLocaleString(localeTag) || ad.price_eur?.toLocaleString(localeTag)} EUR
-                  </p>
-                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                    <label className="flex items-center justify-between gap-3 rounded-lg bg-background-muted px-2.5 py-2 text-[12px] font-medium text-primary">
-                      <span>{t("notifyOnPriceDrop")}</span>
-                      <input
-                        name={`saved-alert-price-drop-${ad.id}`}
-                        type="checkbox"
-                        className="size-4 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
-                        checked={preference.notify_price_drop}
-                        disabled={!savedState.alertsSupported || savedState.isBulkUpdating || savedState.updatingAdId === ad.id}
-                        onChange={(e) => {
-                          void updatePreference(ad.id, { notify_price_drop: e.target.checked });
-                        }}
-                      />
-                    </label>
-                    <label className="flex items-center justify-between gap-3 rounded-lg bg-background-muted px-2.5 py-2 text-[12px] font-medium text-primary">
-                      <span>{t("notifyOnStatusChange")}</span>
-                      <input
-                        name={`saved-alert-status-change-${ad.id}`}
-                        type="checkbox"
-                        className="size-4 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
-                        checked={preference.notify_status_change}
-                        disabled={!savedState.alertsSupported || savedState.isBulkUpdating || savedState.updatingAdId === ad.id}
-                        onChange={(e) => {
-                          void updatePreference(ad.id, { notify_status_change: e.target.checked });
-                        }}
-                      />
-                    </label>
-                    <label className="flex items-center justify-between gap-3 rounded-lg bg-background-muted px-2.5 py-2 text-[12px] font-medium text-primary">
-                      <span>{t("notifyOnSimilarCars")}</span>
-                      <input
-                        name={`saved-alert-similar-${ad.id}`}
-                        type="checkbox"
-                        className="size-4 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
-                        checked={preference.notify_similar}
-                        disabled={!savedState.alertsSupported || savedState.isBulkUpdating || savedState.updatingAdId === ad.id}
-                        onChange={(e) => {
-                          void updatePreference(ad.id, { notify_similar: e.target.checked });
-                        }}
-                      />
-                    </label>
-                    <label className="flex items-center justify-between gap-3 rounded-lg bg-background-muted px-2.5 py-2 text-[12px] font-medium text-primary">
-                      <span>{t("notifyByEmail")}</span>
-                      <input
-                        name={`saved-alert-email-${ad.id}`}
-                        type="checkbox"
-                        className="size-4 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
-                        checked={preference.notify_email}
-                        disabled={!savedState.alertsSupported || savedState.isBulkUpdating || savedState.updatingAdId === ad.id}
-                        onChange={(e) => {
-                          void updatePreference(ad.id, { notify_email: e.target.checked });
-                        }}
-                      />
-                    </label>
-                    <label className="flex items-center justify-between gap-3 rounded-lg bg-background-muted px-2.5 py-2 text-[12px] font-medium text-primary sm:col-span-2">
-                      <span>{t("pauseThisAlert")}</span>
-                      <input
-                        name={`saved-alert-pause-${ad.id}`}
-                        type="checkbox"
-                        className="size-4 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
-                        checked={preference.paused}
-                        disabled={!savedState.alertsSupported || savedState.isBulkUpdating || savedState.updatingAdId === ad.id}
-                        onChange={(e) => {
-                          void updatePreference(ad.id, { paused: e.target.checked });
-                        }}
-                      />
-                    </label>
-                  </div>
-                </div>
+                   <p className="mt-1 text-[11px] text-secondary">
+                     {t("baselineAtSave")}: {preference.baseline_price_eur?.toLocaleString(localeTag) || ad.price_eur?.toLocaleString(localeTag)} EUR
+                   </p>
+                   <div className="mt-3 space-y-2">
+                     <SavedAlertCheckbox
+                       id={`saved-alert-price-drop-${ad.id}`}
+                       title={t("notifyOnPriceDrop")}
+                       description={t("notifyOnPriceDropHelp")}
+                       checked={preference.notify_price_drop}
+                       disabled={!savedState.alertsSupported || savedState.isBulkUpdating || savedState.updatingAdId === ad.id}
+                       onChange={(checked) => {
+                         void updatePreference(ad.id, { notify_price_drop: checked });
+                       }}
+                     />
+                     <SavedAlertCheckbox
+                       id={`saved-alert-status-change-${ad.id}`}
+                       title={t("notifyOnStatusChange")}
+                       description={t("notifyOnStatusChangeHelp")}
+                       checked={preference.notify_status_change}
+                       disabled={!savedState.alertsSupported || savedState.isBulkUpdating || savedState.updatingAdId === ad.id}
+                       onChange={(checked) => {
+                         void updatePreference(ad.id, { notify_status_change: checked });
+                       }}
+                     />
+                     <SavedAlertCheckbox
+                       id={`saved-alert-email-${ad.id}`}
+                       title={t("notifyByEmail")}
+                       description={t("notifyByEmailHelp")}
+                       checked={preference.notify_email}
+                       disabled={!savedState.alertsSupported || savedState.isBulkUpdating || savedState.updatingAdId === ad.id}
+                       onChange={(checked) => {
+                         void updatePreference(ad.id, { notify_email: checked });
+                       }}
+                     />
+                     <SavedAlertCheckbox
+                       id={`saved-alert-pause-${ad.id}`}
+                       title={t("pauseThisAlert")}
+                       description={t("pauseThisAlertHelp")}
+                       checked={preference.paused}
+                       disabled={!savedState.alertsSupported || savedState.isBulkUpdating || savedState.updatingAdId === ad.id}
+                       onChange={(checked) => {
+                         void updatePreference(ad.id, { paused: checked });
+                       }}
+                     />
+                   </div>
+                 </div>
+               </div>
               </div>
-            </div>
-          ),
-        )}
+          ))}
       </div>
-
-      <SavedSearchesPanel />
     </div>
   );
 }

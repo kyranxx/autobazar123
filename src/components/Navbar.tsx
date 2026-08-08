@@ -18,7 +18,7 @@ import { useTranslations } from "next-intl";
 import { cn } from "@/utils/cn";
 import { isCurrentNavigationTarget } from "@/components/navbar-navigation";
 import AuthModal from "@/components/AuthModal";
-import { LockIcon, PlusIcon } from "@/components/ui/Icons";
+import { LockIcon, MessageIcon, PlusIcon } from "@/components/ui/Icons";
 import { CREATE_LISTING_ROUTE, getMarketPath } from "@/lib/routes";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import type { MarketCode } from "@/config/markets";
@@ -40,7 +40,6 @@ type NavbarUiAction =
   | { type: "open-mobile-menu" }
   | { type: "close-mobile-menu" }
   | { type: "open-user-menu" }
-  | { type: "toggle-user-menu" }
   | { type: "close-user-menu" }
   | { type: "open-auth-modal" }
   | { type: "close-auth-modal" }
@@ -61,8 +60,6 @@ function navbarUiReducer(state: NavbarUiState, action: NavbarUiAction): NavbarUi
       return { ...state, mobileMenuOpen: false };
     case "open-user-menu":
       return { ...state, userMenuOpen: true };
-    case "toggle-user-menu":
-      return { ...state, userMenuOpen: !state.userMenuOpen };
     case "close-user-menu":
       return { ...state, userMenuOpen: false };
     case "open-auth-modal":
@@ -355,14 +352,6 @@ export default function Navbar() {
     }
     dispatch({ type: "open-user-menu" });
   };
-  const toggleUserMenu = () => {
-    if (userMenuCloseTimerRef.current) {
-      clearTimeout(userMenuCloseTimerRef.current);
-      userMenuCloseTimerRef.current = null;
-    }
-    dispatch({ type: "toggle-user-menu" });
-  };
-
   const closeUserMenu = () => {
     if (userMenuCloseTimerRef.current) {
       clearTimeout(userMenuCloseTimerRef.current);
@@ -428,7 +417,6 @@ export default function Navbar() {
                   userMenuRef={userMenuRef}
                   userMenuOpen={ui.userMenuOpen}
                   onOpenMenu={openUserMenu}
-                  onToggleMenu={toggleUserMenu}
                   onCloseMenu={closeUserMenu}
                   onSignOut={() => {
                     closeUserMenu();
@@ -455,6 +443,7 @@ export default function Navbar() {
                   dealerDashboardAria={tNav("dealerDashboardAria")}
                   adminAria={tNav("adminAria")}
                   userFallback={tNav("userFallback")}
+                  messagesLabel={tDashboard("messages")}
                 />
               )}
 
@@ -562,7 +551,6 @@ function NavbarAuthSlot({
   userMenuRef,
   userMenuOpen,
   onOpenMenu,
-  onToggleMenu,
   onCloseMenu,
   onSignOut,
   avatarUrl,
@@ -586,13 +574,13 @@ function NavbarAuthSlot({
   dealerDashboardAria,
   adminAria,
   userFallback,
+  messagesLabel,
 }: {
   isHydrated: boolean;
   user: NavbarAuthContextValue["user"];
   userMenuRef: RefObject<HTMLDivElement | null>;
   userMenuOpen: boolean;
   onOpenMenu: () => void;
-  onToggleMenu: () => void;
   onCloseMenu: () => void;
   onSignOut: () => void;
   avatarUrl?: string;
@@ -622,6 +610,7 @@ function NavbarAuthSlot({
   dealerDashboardAria: string;
   adminAria: string;
   userFallback: string;
+  messagesLabel: string;
 }) {
   if (!isHydrated) {
     return <div className="w-[82px] h-9" />;
@@ -644,7 +633,6 @@ function NavbarAuthSlot({
       userMenuRef={userMenuRef}
       userMenuOpen={userMenuOpen}
       onOpenMenu={onOpenMenu}
-      onToggleMenu={onToggleMenu}
       onCloseMenu={onCloseMenu}
       onSignOut={onSignOut}
       avatarUrl={avatarUrl}
@@ -666,6 +654,7 @@ function NavbarAuthSlot({
       dealerDashboardAria={dealerDashboardAria}
       adminAria={adminAria}
       userFallback={userFallback}
+      messagesLabel={messagesLabel}
     />
   );
 }
@@ -674,7 +663,6 @@ function AuthenticatedUserMenu({
   userMenuRef,
   userMenuOpen,
   onOpenMenu,
-  onToggleMenu,
   onCloseMenu,
   onSignOut,
   avatarUrl,
@@ -696,11 +684,11 @@ function AuthenticatedUserMenu({
   dealerDashboardAria,
   adminAria,
   userFallback,
+  messagesLabel,
 }: {
   userMenuRef: RefObject<HTMLDivElement | null>;
   userMenuOpen: boolean;
   onOpenMenu: () => void;
-  onToggleMenu: () => void;
   onCloseMenu: () => void;
   onSignOut: () => void;
   avatarUrl?: string;
@@ -728,17 +716,30 @@ function AuthenticatedUserMenu({
   dealerDashboardAria: string;
   adminAria: string;
   userFallback: string;
+  messagesLabel: string;
 }) {
   return (
     <div className="flex items-center gap-2">
+      <Link
+        href="/moj-ucet?tab=messages"
+        prefetch={false}
+        aria-label={messagesLabel}
+        title={messagesLabel}
+        onClick={safeNavigate("/moj-ucet?tab=messages", onCloseMenu)}
+        onKeyDown={safeKeyboardNavigate("/moj-ucet?tab=messages", onCloseMenu)}
+        className="inline-flex size-10 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-background-muted hover:text-[var(--color-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+      >
+        <MessageIcon className="size-5" />
+      </Link>
       <div
         className="relative"
         ref={userMenuRef}
         onMouseEnter={onOpenMenu}
         onMouseLeave={onCloseMenu}
       >
-        <button
-          type="button"
+        <Link
+          href="/moj-ucet?tab=ads"
+          prefetch={false}
           className={cn(
             "relative overflow-hidden flex size-9 items-center justify-center rounded-full",
             "bg-background-tertiary border border-border-subtle",
@@ -747,10 +748,8 @@ function AuthenticatedUserMenu({
             userMenuOpen && "border-accent ring-4 ring-accent",
           )}
           aria-label={myAccountAria}
-          aria-haspopup="menu"
-          aria-expanded={userMenuOpen}
-          aria-controls="account-menu"
-          onClick={onToggleMenu}
+          onClick={safeNavigate("/moj-ucet?tab=ads", onCloseMenu)}
+          onKeyDown={safeKeyboardNavigate("/moj-ucet?tab=ads", onCloseMenu)}
           onFocus={onOpenMenu}
         >
           {avatarUrl && avatarErrorUrl !== avatarUrl ? (
@@ -765,7 +764,7 @@ function AuthenticatedUserMenu({
           ) : (
             userInitials
           )}
-        </button>
+        </Link>
 
         <div
           className={cn(

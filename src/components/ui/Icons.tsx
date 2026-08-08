@@ -246,6 +246,31 @@ export function MessageIcon({ className }: { className?: string }) {
   );
 }
 
+export function XIcon({
+  className,
+  "aria-hidden": ariaHidden,
+}: {
+  className?: string;
+  "aria-hidden"?: boolean | "true" | "false";
+}) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      aria-hidden={ariaHidden}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M6 6l12 12M18 6L6 18"
+      />
+    </svg>
+  );
+}
+
 export function VerifiedIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="currentColor" viewBox="0 0 20 20">

@@ -797,6 +797,7 @@ function WizardStepContent({
 
 function WizardNavigation({
   currentStep,
+  isEditMode,
   isSubmitting,
   errors,
   submitLabel,
@@ -805,6 +806,7 @@ function WizardNavigation({
   onBack,
 }: {
   currentStep: number;
+  isEditMode: boolean;
   isSubmitting: boolean;
   errors: WizardErrors;
   submitLabel: string;
@@ -834,7 +836,7 @@ function WizardNavigation({
       ) : null}
 
       <div className="flex items-center justify-between gap-4">
-        {currentStep > 1 ? (
+        {!isEditMode && currentStep > 1 ? (
           <button
             type="button"
             onClick={onBack}
@@ -1135,6 +1137,15 @@ function useAdWizardController({
     return Object.keys(nextErrors).length === 0;
   };
 
+  const validateForSubmit = (): boolean => {
+    const stepsToValidate = isEditMode ? [1, 2, 3, 4, 5] : [state.currentStep];
+    const nextErrors = stepsToValidate.reduce<WizardErrors>((errors, step) => {
+      return { ...errors, ...buildStepErrors(step, state.formData, t) };
+    }, {});
+    dispatch({ type: "setErrors", errors: nextErrors });
+    return Object.keys(nextErrors).length === 0;
+  };
+
   const handleNext = () => {
     if (validateStep(state.currentStep)) {
       dispatch({ type: "nextStep" });
@@ -1312,7 +1323,7 @@ function useAdWizardController({
   };
 
   const handleSubmit = async () => {
-    if (!validateStep(state.currentStep)) return;
+    if (!validateForSubmit()) return;
     if (!user) return;
 
     if (isEditMode && !adId) {
@@ -1615,6 +1626,24 @@ export default function AdWizardClient(props: AdWizardClientProps) {
   const draftSavedLabel = draftPrompt
     ? new Date(draftPrompt.savedAt).toLocaleString(inlineCopy.localeTag)
     : "";
+  const wizardStepProps = {
+    formData: state.formData,
+    updateFormData,
+    errors: state.errors,
+    handleDecodeVin,
+    vinDecodingEnabled: Boolean(resolvedProps.vinDecodingEnabled),
+    vinDecodeState,
+    handlePhotoUpload,
+    removePhoto,
+    toggleEquipment,
+    isEditMode,
+    taxonomy,
+    isTaxonomyLoading,
+    taxonomyError,
+    submitOperation,
+    setSubmitOperation,
+    pricingOptions,
+  };
 
   const content = (
     <div className={shellClass}>
@@ -1654,18 +1683,20 @@ export default function AdWizardClient(props: AdWizardClientProps) {
         </div>
       ) : null}
 
-      <WizardProgress
-        currentStep={state.currentStep}
-        steps={STEPS}
-        onStepClick={(step) => dispatch({ type: "setStep", step })}
-      />
+      {!isEditMode ? (
+        <WizardProgress
+          currentStep={state.currentStep}
+          steps={STEPS}
+          onStepClick={(step) => dispatch({ type: "setStep", step })}
+        />
+      ) : null}
 
       <div className="rounded-2xl border border-border bg-background overflow-hidden">
         <div className="p-6 sm:p-8 lg:p-10 [&_.form-input]:min-h-12 [&_.form-input]:text-base [&_h2]:!text-2xl [&_h3]:!text-lg [&_label]:!text-base sm:[&_h2]:!text-3xl">
           <form
             onSubmit={(event) => {
               event.preventDefault();
-              if (state.currentStep === 5) {
+              if (isEditMode || state.currentStep === 5) {
                 void handleSubmit();
                 return;
               }
@@ -1673,25 +1704,15 @@ export default function AdWizardClient(props: AdWizardClientProps) {
             }}
             className="space-y-0"
           >
-            <WizardStepContent
-              currentStep={state.currentStep}
-              formData={state.formData}
-              updateFormData={updateFormData}
-              errors={state.errors}
-              handleDecodeVin={handleDecodeVin}
-              vinDecodingEnabled={Boolean(resolvedProps.vinDecodingEnabled)}
-              vinDecodeState={vinDecodeState}
-              handlePhotoUpload={handlePhotoUpload}
-              removePhoto={removePhoto}
-              toggleEquipment={toggleEquipment}
-              isEditMode={isEditMode}
-              taxonomy={taxonomy}
-              isTaxonomyLoading={isTaxonomyLoading}
-              taxonomyError={taxonomyError}
-              submitOperation={submitOperation}
-              setSubmitOperation={setSubmitOperation}
-              pricingOptions={pricingOptions}
-            />
+            {isEditMode ? (
+              <div className="space-y-10 divide-y divide-border [&>div+div]:pt-10">
+                {[1, 2, 3, 4, 5].map((step) => (
+                  <WizardStepContent key={step} {...wizardStepProps} currentStep={step} />
+                ))}
+              </div>
+            ) : (
+              <WizardStepContent {...wizardStepProps} currentStep={state.currentStep} />
+            )}
 
             {!isEditMode && state.currentStep === 5 ? (
               <div className="mt-6">
@@ -1700,7 +1721,8 @@ export default function AdWizardClient(props: AdWizardClientProps) {
             ) : null}
 
             <WizardNavigation
-              currentStep={state.currentStep}
+              currentStep={isEditMode ? 5 : state.currentStep}
+              isEditMode={isEditMode}
               isSubmitting={state.isSubmitting}
               errors={state.errors}
               submitLabel={submitLabel}
