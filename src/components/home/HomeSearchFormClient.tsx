@@ -2039,58 +2039,66 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
         </button>
       </div>
 
-      {featuredBrands.length > 0 ? (
-        <div className="mt-3">
-          <div className="mb-2 flex items-center justify-between gap-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-text-primary">
-              {t("popularBrandsLabel")}
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-2 min-[420px]:grid-cols-4 sm:grid-cols-8">
-            {featuredBrands.map((option) => {
-              const isActive = activeBrand === option.name;
-
-              return (
-                <button
-                  key={option.id}
-                  type="button"
-                  aria-label={option.name}
-                  onClick={() => {
-                    applyPrimaryBrand(isActive ? "" : option.name);
-                  }}
-                  className={cn(
-                    "home-pressable home-hover-surface relative flex min-w-0 flex-col items-center justify-center rounded-lg border px-1 py-1.5 text-[9px] font-semibold transition-all group sm:px-2 sm:py-2 lg:px-1.5",
-                    isActive
-                      ? "border-[var(--home-brand)] bg-[var(--home-brand)] text-[var(--home-mint)] shadow-md"
-                      : "border-border-subtle bg-white text-text-primary",
-                  )}
-                  style={
-                    (
-                      isActive
-                        ? {
-                            "--home-hover-border": "var(--home-brand)",
-                            "--home-hover-bg": "var(--home-brand)",
-                            "--home-hover-text": "var(--home-mint)",
-                            "--home-hover-shadow": "var(--shadow-md)",
-                          }
-                        : {
-                            "--home-hover-border": "var(--home-mint)",
-                            "--home-hover-bg": "var(--home-mint-soft)",
-                            "--home-hover-text": "var(--home-brand)",
-                            "--home-hover-shadow": "var(--shadow-sm)",
-                          }
-                    ) as CSSProperties
-                  }
-                >
-                  <span className="flex h-8 w-full items-center justify-center rounded-md bg-white sm:h-9">
-                    <HomeBrandLogo brand={option.name} slug={option.slug} />
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+      <div className="mt-3">
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-text-primary">
+            {t("popularBrandsLabel")}
+          </p>
         </div>
-      ) : null}
+        <div className="grid grid-cols-2 gap-2 min-[420px]:grid-cols-4 sm:grid-cols-8">
+          {featuredBrands.length > 0
+            ? featuredBrands.map((option) => {
+                const isActive = activeBrand === option.name;
+
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    aria-label={option.name}
+                    onClick={() => {
+                      applyPrimaryBrand(isActive ? "" : option.name);
+                    }}
+                    className={cn(
+                      "home-pressable home-hover-surface relative flex min-w-0 flex-col items-center justify-center rounded-lg border px-1 py-1.5 text-[9px] font-semibold transition-all group sm:px-2 sm:py-2 lg:px-1.5",
+                      isActive
+                        ? "border-[var(--home-brand)] bg-[var(--home-brand)] text-[var(--home-mint)] shadow-md"
+                        : "border-border-subtle bg-white text-text-primary",
+                    )}
+                    style={
+                      (
+                        isActive
+                          ? {
+                              "--home-hover-border": "var(--home-brand)",
+                              "--home-hover-bg": "var(--home-brand)",
+                              "--home-hover-text": "var(--home-mint)",
+                              "--home-hover-shadow": "var(--shadow-md)",
+                            }
+                          : {
+                              "--home-hover-border": "var(--home-mint)",
+                              "--home-hover-bg": "var(--home-mint-soft)",
+                              "--home-hover-text": "var(--home-brand)",
+                              "--home-hover-shadow": "var(--shadow-sm)",
+                            }
+                      ) as CSSProperties
+                    }
+                  >
+                    <span className="flex h-8 w-full items-center justify-center rounded-md bg-white sm:h-9">
+                      <HomeBrandLogo brand={option.name} slug={option.slug} />
+                    </span>
+                  </button>
+                );
+              })
+            : HOME_FEATURED_BRAND_SLUGS.map((slug) => (
+                <span
+                  key={`brand-placeholder-${slug}`}
+                  aria-hidden="true"
+                  className="flex min-w-0 flex-col items-center justify-center rounded-lg border border-border-subtle bg-white px-1 py-1.5 sm:px-2 sm:py-2 lg:px-1.5"
+                >
+                  <span className="flex h-8 w-full items-center justify-center rounded-md bg-background-muted sm:h-9" />
+                </span>
+              ))}
+        </div>
+      </div>
 
       <div className="mt-3 hidden" aria-hidden="true">
         <div className="relative w-full min-w-0 overflow-visible">

@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import { Suspense } from "react";
+import { preload } from "react-dom";
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { TrackedLink } from "@/components/analytics";
@@ -43,6 +44,10 @@ const QUICK_LINKS = [
     cta: "automatics",
   },
 ] as const;
+
+const HOME_HERO_IMAGE_SRC = "/brand/autoninja/homepage-hero-ninja-leisure-v2.webp";
+const TRANSPARENT_PIXEL_SRC =
+  "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
 
 const BRAND_LOGOS = [
   { name: "Volkswagen", src: "/brand-logos/volkswagen.png", href: "/volkswagen" },
@@ -118,6 +123,13 @@ export default async function HomePageShell() {
     },
   ] as const;
 
+  preload(HOME_HERO_IMAGE_SRC, {
+    as: "image",
+    fetchPriority: "high",
+    media: "(min-width: 640px)",
+    type: "image/webp",
+  });
+
   return (
     <div
       style={vars}
@@ -130,15 +142,23 @@ export default async function HomePageShell() {
           className="search-first border-b border-black/8 bg-[var(--home-soft-surface)]"
         >
           <div className="relative isolate overflow-hidden bg-[var(--home-brand)]">
-            <Image
-              src="/brand/autoninja/homepage-hero-ninja-leisure-v2.webp"
-              alt=""
-              fill
-              priority
-              sizes="100vw"
-              aria-hidden="true"
-              className="object-cover object-[68%_center] sm:object-[64%_center] lg:object-center"
-            />
+            <picture className="absolute inset-0 hidden sm:block">
+              <source
+                media="(min-width: 640px)"
+                srcSet={HOME_HERO_IMAGE_SRC}
+                type="image/webp"
+              />
+              {/* The transparent fallback prevents the desktop hero from downloading on mobile. */}
+              <img
+                src={TRANSPARENT_PIXEL_SRC}
+                alt=""
+                width={1672}
+                height={941}
+                decoding="async"
+                fetchPriority="high"
+                className="h-full w-full object-cover object-[64%_center] lg:object-center"
+              />
+            </picture>
             <div
               aria-hidden="true"
               className="absolute inset-0 bg-[linear-gradient(90deg,rgba(5,23,20,0.96)_0%,rgba(5,23,20,0.82)_34%,rgba(5,23,20,0.28)_68%,rgba(5,23,20,0.04)_100%)] sm:bg-[linear-gradient(90deg,rgba(5,23,20,0.94)_0%,rgba(5,23,20,0.72)_38%,rgba(5,23,20,0.12)_72%,rgba(5,23,20,0.02)_100%)]"
