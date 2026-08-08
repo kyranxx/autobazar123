@@ -137,6 +137,21 @@ describe("POST /api/listing-reports", () => {
     );
   });
 
+  it("returns retry timing when the strict rate limit is exceeded", async () => {
+    checkStrictRateLimitMock.mockResolvedValue({
+      success: false,
+      limit: 10,
+      remaining: 0,
+      reset: Date.now() + 60_000,
+    });
+
+    const response = await POST(createRequest({}));
+
+    expect(response.status).toBe(429);
+    expect(Number(response.headers.get("Retry-After"))).toBeGreaterThan(0);
+    expect(verifyTurnstileTokenMock).not.toHaveBeenCalled();
+  });
+
   it("rejects reporting your own ad", async () => {
     adsMaybeSingleMock.mockResolvedValue({
       data: { id: "11111111-1111-4111-8111-111111111111", status: "active", seller_id: "user-1" },

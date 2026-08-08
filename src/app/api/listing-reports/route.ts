@@ -43,7 +43,14 @@ export async function POST(request: NextRequest) {
   if (!rate.success) {
     return NextResponse.json(
       { error: "Príliš veľa hlásení. Skúste znova neskôr." },
-      { status: 429 },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(
+            Math.max(1, Math.ceil((rate.reset - Date.now()) / 1000)),
+          ),
+        },
+      },
     );
   }
 
