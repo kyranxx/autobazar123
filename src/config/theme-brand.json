@@ -6,6 +6,8 @@
   "accentHover": "#E85A00",
   "accentForeground": "#111317",
   "accentSubtle": "#FFF0E6",
+  "accentText": "#F45B00",
+  "accentTextHover": "#E85A00",
   "mint": "#49E698",
   "softSurface": "#F3F7F2",
   "success": "#1F6D4A",

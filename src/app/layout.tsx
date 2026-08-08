@@ -90,6 +90,8 @@ export default function RootLayout({
     "--color-accent-hover": BRAND_THEME.accentHover,
     "--color-accent-foreground": BRAND_THEME.accentForeground,
     "--color-accent-subtle": BRAND_THEME.accentSubtle,
+    "--color-accent-text": BRAND_THEME.accentText,
+    "--color-accent-text-hover": BRAND_THEME.accentTextHover,
     "--color-digital": BRAND_THEME.primary,
   } as CSSProperties;
 
