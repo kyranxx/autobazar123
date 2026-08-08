@@ -2,9 +2,10 @@
 
 ## Current decision state
 
-The mascot's permanent costume signature is awaiting approval from the August
-2026 remake concepts. Until one concept is selected, generated characters are
-previews only and must not replace production mascot assets.
+The mascot's final production master and first homepage pose are awaiting
+approval from the August 2026 remake concepts. Until one concept is selected,
+generated characters and proposed brand patterns are previews only and must not
+replace production assets.
 
 The current homepage hero character is not an identity reference. It drifted
 from the established small leaning mascot and must not be used to generate new
@@ -31,13 +32,23 @@ because small errors compound from generation to generation.
   exposed human skin.
 - Compact, friendly body with soft premium 3D toy rendering and matte-black
   materials. Never tall, athletic, muscular, realistic, or aggressive.
-- Proper simple black kimono jacket with a visible crossover collar, relaxed
-  black trousers, and an orange waist detail.
+- Proper simple black kimono jacket with a visible crossover collar and relaxed
+  black trousers.
+- Preserve the original orange headband: the same width, a knot on the
+  character's left, and two short orange cloth tails.
+- Preserve the original orange tied belt: the same front knot and two short
+  hanging orange ends.
+- The black hood beneath the headband must read as cloth rather than a helmet.
+  Use only two to four broad overlapping fabric panels or seams; never cover the
+  head in many narrow bandage-like wraps.
 - Plain black ninja or split-toe tabi boots. No sneakers, laces, white athletic
   soles, or streetwear.
 - Calm, confident, helpful personality. No weapons or combat-led poses.
-- No loose head wrapping, bandana knot, scarf, ribbons, or flying fabric tails.
-- The final selected head/collar signature must be copied exactly in every pose.
+- Every production pose must show an automotive action or object: for example a
+  car key, steering wheel, tyre, wheel, pressure gauge, gearshift, diagnostic
+  tool, charging cable, or another clearly recognizable car-related item. The
+  mascot should never stand empty-handed without doing anything.
+- The final approved clothing construction must be copied exactly in every pose.
 
 ## Approved palette
 
@@ -78,15 +89,19 @@ with:
 > Preserve the exact AutoNinja mascot identity from the supplied approved
 > references: the same spherical matte-black head, rounded inset black visor,
 > friendly orange crescent eyes, compact soft 3D proportions, proper black
-> kimono, plain black tabi boots, orange waist detail, and the selected signature
-> feature. This must be the same character in a new pose, not a reinterpretation
-> or a generic ninja. Change only the requested pose, prop, or environment.
+> kimono, plain black tabi boots, original tied orange headband, original tied
+> orange belt, restrained broad cloth panels beneath the headband, and the
+> selected automotive prop. This must be the same character in a new pose, not a
+> reinterpretation or a generic ninja. Change only the requested pose, prop, or
+> environment.
 
 Always finish with:
 
-> No sneakers, laces, white soles, loose head wraps, bandana knots, scarf tails,
-> weapons, exposed skin, realistic facial features, angry eyes, complicated
-> armor, extra logos, text, or watermark.
+> Do not remove or redesign the orange headband knot, its two short tails, the
+> tied orange belt, or its two short ends. No sneakers, laces, white soles,
+> smooth helmet shell, excessive narrow wraps, mummy wrapping, weapons, exposed
+> skin, realistic facial features, angry eyes, complicated armor, extra logos,
+> text, or watermark.
 
 ## Usage rules
 
