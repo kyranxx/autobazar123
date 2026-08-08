@@ -45,7 +45,8 @@ const QUICK_LINKS = [
   },
 ] as const;
 
-const HOME_HERO_MASCOT_SRC = "/brand/autoninja/mascot-steering-wheel-hero-v1.webp";
+const HOME_HERO_BACKGROUND_SRC = "/brand/autoninja/homepage-hero-car-studio-v1.webp";
+const HOME_HERO_MASCOT_SRC = "/brand/autoninja/mascot-leaning-key-hero-v2.webp";
 const TRANSPARENT_PIXEL_SRC =
   "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
 
@@ -123,11 +124,13 @@ export default async function HomePageShell() {
     },
   ] as const;
 
-  preload(HOME_HERO_MASCOT_SRC, {
-    as: "image",
-    fetchPriority: "high",
-    media: "(min-width: 640px)",
-    type: "image/webp",
+  [HOME_HERO_BACKGROUND_SRC, HOME_HERO_MASCOT_SRC].forEach((src) => {
+    preload(src, {
+      as: "image",
+      fetchPriority: "high",
+      media: "(min-width: 640px)",
+      type: "image/webp",
+    });
   });
 
   return (
@@ -142,9 +145,26 @@ export default async function HomePageShell() {
           className="search-first border-b border-black/8 bg-[var(--home-soft-surface)]"
         >
           <div className="relative isolate overflow-hidden bg-[var(--home-brand)]">
+            <picture className="absolute inset-0 hidden sm:block">
+              <source
+                media="(min-width: 640px)"
+                srcSet={HOME_HERO_BACKGROUND_SRC}
+                type="image/webp"
+              />
+              {/* The transparent fallback prevents the desktop hero from downloading on mobile. */}
+              <img
+                src={TRANSPARENT_PIXEL_SRC}
+                alt=""
+                width={1672}
+                height={941}
+                decoding="async"
+                fetchPriority="high"
+                className="h-full w-full object-cover object-[64%_center] lg:object-center"
+              />
+            </picture>
             <div
               aria-hidden="true"
-              className="absolute inset-0 bg-[radial-gradient(circle_at_80%_32%,rgba(244,91,0,0.24)_0%,rgba(0,92,51,0)_34%),linear-gradient(120deg,#061713_0%,#005c33_58%,#003d24_100%)]"
+              className="absolute inset-0 bg-[radial-gradient(circle_at_80%_32%,rgba(244,91,0,0.18)_0%,rgba(0,92,51,0)_34%),linear-gradient(120deg,#061713_0%,#005c33_58%,#003d24_100%)] sm:hidden"
             />
             <picture className="pointer-events-none absolute bottom-[5.75rem] right-4 top-3 hidden w-[42%] sm:right-6 sm:block sm:w-[38%] lg:bottom-[6.75rem] lg:right-8 lg:top-4 lg:w-[36%]">
               <source

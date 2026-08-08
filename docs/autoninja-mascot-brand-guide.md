@@ -2,7 +2,8 @@
 
 ## Current decision state
 
-The steering-wheel mascot is the approved production master and homepage pose.
+The leaning mascot with a car key dangling from one finger is the approved
+production master and homepage pose.
 Proposed brand patterns remain previews until separately approved.
 
 The superseded angular-hood homepage hero character drifted from the established
@@ -10,10 +11,12 @@ small leaning mascot and must not be used to generate new poses.
 
 ## Identity source of truth
 
-- Primary identity reference: `public/brand/autoninja/mascot-leaning-key-transparent.png`
+- Primary identity reference: `public/brand/autoninja/mascot-leaning-key-hero-v2.png`
 - Supporting face reference: `public/brand/autoninja/mascot-head.png`
-- Approved full-body master: `public/brand/autoninja/mascot-steering-wheel-hero-v1.png`
-- Production hero asset: `public/brand/autoninja/mascot-steering-wheel-hero-v1.webp`
+- Supporting approved full-body pose: `public/brand/autoninja/mascot-steering-wheel-hero-v1.png`
+- Approved full-body master: `public/brand/autoninja/mascot-leaning-key-hero-v2.png`
+- Production hero asset: `public/brand/autoninja/mascot-leaning-key-hero-v2.webp`
+- Production car background: `public/brand/autoninja/homepage-hero-car-studio-v1.webp`
 - Legacy proportion reference only: `public/brand/autoninja/mascot-master.png`
 
 Every future mascot graphic must include the approved final character sheet as
@@ -47,6 +50,8 @@ because small errors compound from generation to generation.
   car key, steering wheel, tyre, wheel, pressure gauge, gearshift, diagnostic
   tool, charging cable, or another clearly recognizable car-related item. The
   mascot should never stand empty-handed without doing anything.
+- In the approved homepage pose, the key ring loops over a finger and the car
+  key hangs visibly below it. The key must not be clenched in the palm.
 - The final approved clothing construction must be copied exactly in every pose.
 
 ## Approved palette
