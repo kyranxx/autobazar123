@@ -188,7 +188,7 @@ export default function Footer({ currentYear }: { currentYear: number }) {
           <AcceptedPaymentMethods
             className="justify-center"
             itemClassName="h-9 rounded-lg px-2 py-1.5"
-            imageClassName="h-4"
+            imageClassName="h-4 w-6"
           />
         </div>
       </div>

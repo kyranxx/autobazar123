@@ -47,7 +47,7 @@ export function AcceptedPaymentMethods({
             alt={paymentMethod.name}
             width={120}
             height={80}
-            className={cn("h-6 w-auto max-w-full object-contain", imageClassName)}
+            className={cn("h-6 w-9 max-w-full object-contain", imageClassName)}
           />
         </li>
       ))}

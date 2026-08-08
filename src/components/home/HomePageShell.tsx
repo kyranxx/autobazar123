@@ -206,7 +206,7 @@ export default async function HomePageShell() {
         <section className="mx-auto max-w-7xl px-4 py-9 sm:px-6 lg:py-12">
           <div className="overflow-hidden rounded-2xl bg-[var(--home-brand)] text-white md:grid md:grid-cols-[1.05fr_.95fr]">
             <div className="p-6 sm:p-8 lg:p-10">
-              <p className="text-sm font-semibold text-[var(--home-mint)]">{t("sellerPromoEyebrow")}</p>
+              <p className="text-sm font-semibold text-white">{t("sellerPromoEyebrow")}</p>
               <h2 className="mt-2 !text-3xl font-semibold !text-white sm:!text-4xl">
                 {t("sellerPromoTitle")}
               </h2>

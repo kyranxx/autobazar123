@@ -21,6 +21,9 @@ const nextConfig: NextConfig = {
 
   // Enable React Compiler for automatic optimizations (Next.js 15+)
   experimental: {
+    // Keep critical styles in the initial document so mobile rendering does not
+    // wait on a second network round trip for the global Tailwind bundles.
+    inlineCss: true,
     optimizePackageImports: [
       '@/components',
       '@/lib',

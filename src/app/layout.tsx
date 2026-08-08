@@ -20,8 +20,8 @@ assertRuntimeEnvConfigured("app");
 const barlow = Barlow({
   subsets: ["latin", "latin-ext"],
   variable: "--font-ab-sans",
-  display: "swap",
-  weight: ["400", "500", "600", "700", "800", "900"],
+  display: "optional",
+  weight: ["400", "600", "800"],
   preload: false,
   adjustFontFallback: true,
 });
@@ -29,8 +29,8 @@ const barlow = Barlow({
 const barlowSemiCondensed = Barlow_Semi_Condensed({
   subsets: ["latin", "latin-ext"],
   variable: "--font-ab-display",
-  display: "swap",
-  weight: ["500", "600", "700", "800", "900"],
+  display: "optional",
+  weight: ["600", "800"],
   preload: false,
   adjustFontFallback: true,
 });
