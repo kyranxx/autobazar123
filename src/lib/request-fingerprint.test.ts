@@ -6,9 +6,18 @@ import {
 } from "./request-fingerprint";
 
 describe("request-fingerprint", () => {
-  it("prefers cf-connecting-ip for client IP extraction", () => {
+  it("ignores cf-connecting-ip in favor of Vercel-owned headers", () => {
     const headers = new Headers({
       "cf-connecting-ip": "198.51.100.44",
+      "x-forwarded-for": "203.0.113.11",
+    });
+
+    expect(getClientIp(headers)).toBe("203.0.113.11");
+  });
+
+  it("prefers x-vercel-forwarded-for over the generic forwarded header", () => {
+    const headers = new Headers({
+      "x-vercel-forwarded-for": "198.51.100.44",
       "x-forwarded-for": "203.0.113.11",
     });
 
@@ -54,8 +63,10 @@ describe("request-fingerprint", () => {
     );
   });
 
-  it("ignores untrusted x-client-ip headers", () => {
+  it("ignores untrusted Cloudflare, real-IP, and client-IP headers", () => {
     const headers = new Headers({
+      "cf-connecting-ip": "203.0.113.9",
+      "x-real-ip": "203.0.113.10",
       "x-client-ip": "203.0.113.11",
     });
 

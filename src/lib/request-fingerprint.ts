@@ -1,15 +1,13 @@
 import { createHash } from "node:crypto";
 
-const IP_HEADERS = [
-  "cf-connecting-ip",
+const TRUSTED_IP_HEADERS = [
   "x-vercel-forwarded-for",
   "x-forwarded-for",
-  "x-real-ip",
 ] as const;
 
 function getFirstHeaderValue(
   headers: Headers,
-  headerName: (typeof IP_HEADERS)[number],
+  headerName: (typeof TRUSTED_IP_HEADERS)[number],
 ): string | null {
   const rawValue = headers.get(headerName);
   if (!rawValue) {
@@ -21,7 +19,7 @@ function getFirstHeaderValue(
 }
 
 export function getClientIp(headers: Headers): string | null {
-  for (const headerName of IP_HEADERS) {
+  for (const headerName of TRUSTED_IP_HEADERS) {
     const value = getFirstHeaderValue(headers, headerName);
     if (value) {
       return value;

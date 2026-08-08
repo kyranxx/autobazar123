@@ -23,11 +23,16 @@ describe("rejectWhenInvalidCronRequest", () => {
     vi.unstubAllEnvs();
   });
 
-  it("allows local cron route calls without CRON_SECRET", () => {
+  it("fails closed outside production when CRON_SECRET is missing", async () => {
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("CRON_SECRET", "");
 
-    expect(rejectWhenInvalidCronRequest(createCronRequest())).toBeNull();
+    const response = rejectWhenInvalidCronRequest(createCronRequest());
+
+    expect(response?.status).toBe(500);
+    await expect(response?.json()).resolves.toEqual({
+      error: "Cron secret is not configured",
+    });
   });
 
   it("fails closed in production when CRON_SECRET is missing", async () => {
@@ -65,8 +70,8 @@ describe("rejectWhenInvalidCronRequest", () => {
     ).toBeNull();
   });
 
-  it("accepts the manual x-cron-secret header in production", () => {
-    vi.stubEnv("NODE_ENV", "production");
+  it("accepts the manual x-cron-secret header outside production", () => {
+    vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("CRON_SECRET", "expected-secret");
 
     expect(

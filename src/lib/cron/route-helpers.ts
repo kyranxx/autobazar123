@@ -8,9 +8,6 @@ export function rejectWhenInvalidCronRequest(
   request: NextRequest,
 ): NextResponse | null {
   const cronSecret = process.env.CRON_SECRET;
-  if (process.env.NODE_ENV !== "production") {
-    return null;
-  }
 
   if (!cronSecret) {
     return NextResponse.json(

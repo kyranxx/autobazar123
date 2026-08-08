@@ -5,7 +5,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { verifyTurnstileToken } from "@/lib/security/turnstile";
 import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
 import { checkStrictRateLimit } from "@/lib/ratelimit";
-import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
+import {
+  createRateLimitIdentifier,
+  getClientIp,
+} from "@/lib/request-fingerprint";
 import { resolveMarketCodeFromHost } from "@/config/markets";
 
 const SubmitListingReportSchema = z.object({
@@ -21,15 +24,6 @@ const SubmitListingReportSchema = z.object({
   details: z.string().trim().min(10).max(1000),
   captchaToken: z.string().min(1),
 });
-
-function getClientIp(request: NextRequest): string | null {
-  return (
-    request.headers.get("x-client-ip") ||
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    request.headers.get("x-real-ip") ||
-    null
-  );
-}
 
 function getRequestHostname(request: NextRequest): string | null {
   const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
@@ -61,7 +55,7 @@ export async function POST(request: NextRequest) {
 
   const captcha = await verifyTurnstileToken({
     token: parsed.data.captchaToken,
-    remoteIp: getClientIp(request),
+    remoteIp: getClientIp(request.headers),
     action: "listing_report_submit",
     expectedHostname: getRequestHostname(request),
   });

@@ -3,6 +3,7 @@ import { NextRequest } from "next/server";
 
 const checkStrictRateLimitMock = vi.fn();
 const createRateLimitIdentifierMock = vi.fn();
+const getClientIpMock = vi.fn();
 const rejectInvalidCsrfRequestMock = vi.fn();
 const verifyTurnstileTokenMock = vi.fn();
 const createAdminClientMock = vi.fn();
@@ -19,6 +20,7 @@ vi.mock("@/lib/ratelimit", () => ({
 vi.mock("@/lib/request-fingerprint", () => ({
   createRateLimitIdentifier: (...args: unknown[]) =>
     createRateLimitIdentifierMock(...args),
+  getClientIp: (...args: unknown[]) => getClientIpMock(...args),
 }));
 
 vi.mock("@/lib/security/csrf", () => ({
@@ -61,6 +63,7 @@ describe("POST /api/listing-reports", () => {
       reset: Date.now() + 60_000,
     });
     createRateLimitIdentifierMock.mockReturnValue("listing-report:test");
+    getClientIpMock.mockReturnValue(null);
     rejectInvalidCsrfRequestMock.mockReturnValue(null);
     verifyTurnstileTokenMock.mockResolvedValue({ ok: true });
     getUserMock.mockResolvedValue({ data: { user: { id: "user-1" } } });
