@@ -15,15 +15,26 @@ export function normalizeGoogleOneTapClientId(
   return trimmed || null;
 }
 
+function resolveMarketSpecificGoogleOneTapClientId(
+  marketCode: MarketCode,
+): string | null {
+  switch (marketCode) {
+    case "SK":
+      return normalizeGoogleOneTapClientId(
+        process.env.NEXT_PUBLIC_AUTONINJA_SK_GOOGLE_CLIENT_ID,
+      );
+    case "RO":
+      return normalizeGoogleOneTapClientId(
+        process.env.NEXT_PUBLIC_AUTONINJA_RO_GOOGLE_CLIENT_ID,
+      );
+  }
+}
+
 export function resolveGoogleOneTapClientId(
   marketCode: MarketCode,
 ): string | null {
-  const market = getMarketConfig(marketCode);
-  const marketSpecificClientId = normalizeGoogleOneTapClientId(
-    market.services.googleClientIdEnvVar
-      ? process.env[market.services.googleClientIdEnvVar]
-      : undefined,
-  );
+  const marketSpecificClientId =
+    resolveMarketSpecificGoogleOneTapClientId(marketCode);
   const legacySlovakClientId =
     marketCode === "SK"
       ? normalizeGoogleOneTapClientId(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID)
