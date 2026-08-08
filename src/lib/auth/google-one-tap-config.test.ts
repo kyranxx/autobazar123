@@ -37,7 +37,7 @@ describe("Google One Tap configuration", () => {
     expect(resolveGoogleOneTapClientId("RO")).toBeNull();
   });
 
-  it("keeps Romanian One Tap disabled until its Supabase audience is configured", () => {
+  it("enables Romanian One Tap when its client ID is configured", () => {
     vi.stubEnv(
       "NEXT_PUBLIC_AUTONINJA_RO_GOOGLE_CLIENT_ID",
       "ro-client-id",
@@ -46,7 +46,7 @@ describe("Google One Tap configuration", () => {
 
     expect(resolveGoogleOneTapConfig("RO")).toEqual({
       clientId: "ro-client-id",
-      enabled: false,
+      enabled: true,
     });
   });
 });

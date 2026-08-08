@@ -21,11 +21,11 @@ describe("market config", () => {
     });
   });
 
-  it("keeps One Tap enabled only where its auth audience is configured", () => {
+  it("keeps One Tap enabled for both production markets", () => {
     for (const marketCode of ["SK", "RO"] as const) {
       const market = getMarketConfig(marketCode);
 
-      expect(market.services.googleOneTapDefaultEnabled).toBe(marketCode === "SK");
+      expect(market.services.googleOneTapDefaultEnabled).toBe(true);
       expect(market.presentation).not.toHaveProperty("skinClassName");
       expect(market.presentation).not.toHaveProperty("resultsClassName");
       expect(market.presentation).not.toHaveProperty("showHomepageMascot");
