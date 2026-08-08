@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   normalizeGoogleOneTapClientId,
+  resolveGoogleOneTapConfig,
   resolveGoogleOneTapClientId,
 } from "./google-one-tap-config";
 
@@ -34,5 +35,18 @@ describe("Google One Tap configuration", () => {
     vi.stubEnv("NEXT_PUBLIC_AUTONINJA_RO_GOOGLE_CLIENT_ID", "");
 
     expect(resolveGoogleOneTapClientId("RO")).toBeNull();
+  });
+
+  it("keeps Romanian One Tap disabled until its Supabase audience is configured", () => {
+    vi.stubEnv(
+      "NEXT_PUBLIC_AUTONINJA_RO_GOOGLE_CLIENT_ID",
+      "ro-client-id",
+    );
+    vi.stubEnv("NEXT_PUBLIC_ENABLE_GOOGLE_ONE_TAP", "true");
+
+    expect(resolveGoogleOneTapConfig("RO")).toEqual({
+      clientId: "ro-client-id",
+      enabled: false,
+    });
   });
 });

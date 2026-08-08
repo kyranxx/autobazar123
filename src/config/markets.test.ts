@@ -21,11 +21,11 @@ describe("market config", () => {
     });
   });
 
-  it("uses the same default AutoNinja product presentation in every market", () => {
+  it("keeps One Tap enabled only where its auth audience is configured", () => {
     for (const marketCode of ["SK", "RO"] as const) {
       const market = getMarketConfig(marketCode);
 
-      expect(market.services.googleOneTapDefaultEnabled).toBe(true);
+      expect(market.services.googleOneTapDefaultEnabled).toBe(marketCode === "SK");
       expect(market.presentation).not.toHaveProperty("skinClassName");
       expect(market.presentation).not.toHaveProperty("resultsClassName");
       expect(market.presentation).not.toHaveProperty("showHomepageMascot");

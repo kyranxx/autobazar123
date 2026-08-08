@@ -176,7 +176,7 @@ export const MARKET_DEFINITIONS = [
       },
     },
     services: {
-      googleOneTapDefaultEnabled: true,
+      googleOneTapDefaultEnabled: false,
       googleClientIdEnvVar: "NEXT_PUBLIC_AUTONINJA_RO_GOOGLE_CLIENT_ID",
       clarityProjectId:
         process.env.NEXT_PUBLIC_CLARITY_ID_RO ??

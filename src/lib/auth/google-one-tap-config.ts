@@ -51,10 +51,11 @@ export function resolveGoogleOneTapConfig(
   const configuredEnabled = process.env.NEXT_PUBLIC_ENABLE_GOOGLE_ONE_TAP;
 
   return {
-    clientId,
-    enabled:
-      Boolean(clientId) &&
-      configuredEnabled !== "false" &&
-      (configuredEnabled === "true" || market.services.googleOneTapDefaultEnabled),
+      clientId,
+      enabled:
+        Boolean(clientId) &&
+        market.services.googleOneTapDefaultEnabled &&
+        configuredEnabled !== "false" &&
+        (configuredEnabled === "true" || market.services.googleOneTapDefaultEnabled),
   };
 }
