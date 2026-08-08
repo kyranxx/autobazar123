@@ -129,56 +129,59 @@ export default async function HomePageShell() {
           aria-labelledby="home-search-heading"
           className="search-first border-b border-black/8 bg-[var(--home-soft-surface)]"
         >
-          <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:py-8">
-            <div className="relative grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] lg:items-start lg:gap-y-4">
-              <div className="order-1 max-w-3xl pr-24 sm:pr-32 lg:pr-0">
+          <div className="relative isolate overflow-hidden bg-[var(--home-brand)]">
+            <Image
+              src="/brand/autoninja/homepage-hero-ninja-leisure-v2.webp"
+              alt=""
+              fill
+              priority
+              sizes="100vw"
+              aria-hidden="true"
+              className="object-cover object-[68%_center] sm:object-[64%_center] lg:object-center"
+            />
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 bg-[linear-gradient(90deg,rgba(5,23,20,0.96)_0%,rgba(5,23,20,0.82)_34%,rgba(5,23,20,0.28)_68%,rgba(5,23,20,0.04)_100%)] sm:bg-[linear-gradient(90deg,rgba(5,23,20,0.94)_0%,rgba(5,23,20,0.72)_38%,rgba(5,23,20,0.12)_72%,rgba(5,23,20,0.02)_100%)]"
+            />
+            <div className="relative mx-auto flex min-h-[21rem] max-w-7xl items-start px-4 pb-28 pt-8 sm:min-h-[24rem] sm:px-6 sm:pb-32 sm:pt-12 lg:min-h-[27rem] lg:pb-36 lg:pt-16">
+              <div className="max-w-[18rem] sm:max-w-lg lg:max-w-2xl">
                 <h1
                   id="home-search-heading"
-                  className="!text-[2rem] font-semibold tracking-[-0.025em] text-text-primary sm:!text-[2.75rem] lg:!text-[3.25rem]"
+                  className="!text-[2rem] font-semibold tracking-[-0.025em] !text-white [text-wrap:balance] sm:!text-[2.75rem] lg:!text-[3.25rem]"
                 >
                   {t("heroTitle")}
                 </h1>
-                <p className="mt-2 max-w-2xl text-base leading-relaxed text-text-secondary sm:text-lg">
+                <p className="mt-3 max-w-xl text-base leading-relaxed text-white/82 sm:text-lg">
                   {t("heroDescription")}
                 </p>
               </div>
-              <div className="order-2 relative z-10 lg:col-span-2">
-                <HomeFrontpageSearch />
-              </div>
-              <nav
-                aria-label={t("quickChoicesTitle")}
-                className="order-3 mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 px-1 text-sm lg:col-span-2"
-              >
-                <span className="font-semibold text-text-primary">{t("quickChoicesTitle")}:</span>
-                {quickCards.map((entry) => (
-                  <TrackedLink
-                    key={`${entry.cta}-${entry.href}`}
-                    href={entry.href}
-                    analyticsEventName="homepage_cta_clicked"
-                    analyticsPayload={{
-                      cta: entry.cta,
-                      surface: "home_quick_search",
-                      destination: entry.href,
-                    }}
-                    className="inline-flex items-center gap-1 font-medium text-[var(--home-brand)] underline-offset-4 hover:underline"
-                  >
-                    {entry.title}
-                    <ArrowRightIcon className="size-3.5" />
-                  </TrackedLink>
-                ))}
-              </nav>
-              <div className="pointer-events-none absolute right-0 top-0 z-20 select-none sm:right-2 lg:right-0">
-                <Image
-                  src="/brand/autoninja/mascot-search-inspect-car-v1.png"
-                  alt=""
-                  width={997}
-                  height={905}
-                  sizes="(min-width: 1536px) 320px, (min-width: 1280px) 288px, (min-width: 1024px) 240px, (min-width: 640px) 144px, 104px"
-                  aria-hidden="true"
-                  className="h-auto w-[6.5rem] object-contain sm:w-36 lg:w-60 xl:w-72 2xl:w-80"
-                />
-              </div>
             </div>
+          </div>
+
+          <div className="relative z-10 mx-auto -mt-20 max-w-7xl px-4 sm:-mt-24 sm:px-6 lg:-mt-28">
+            <HomeFrontpageSearch />
+            <nav
+              aria-label={t("quickChoicesTitle")}
+              className="flex flex-wrap items-center gap-x-5 gap-y-2 px-1 pb-6 pt-4 text-sm sm:pb-8"
+            >
+              <span className="font-semibold text-text-primary">{t("quickChoicesTitle")}:</span>
+              {quickCards.map((entry) => (
+                <TrackedLink
+                  key={`${entry.cta}-${entry.href}`}
+                  href={entry.href}
+                  analyticsEventName="homepage_cta_clicked"
+                  analyticsPayload={{
+                    cta: entry.cta,
+                    surface: "home_quick_search",
+                    destination: entry.href,
+                  }}
+                  className="inline-flex items-center gap-1 font-medium text-[var(--home-brand)] underline-offset-4 hover:underline"
+                >
+                  {entry.title}
+                  <ArrowRightIcon className="size-3.5" />
+                </TrackedLink>
+              ))}
+            </nav>
           </div>
         </section>
 
