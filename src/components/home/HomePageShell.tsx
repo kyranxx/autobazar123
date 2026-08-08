@@ -45,7 +45,7 @@ const QUICK_LINKS = [
   },
 ] as const;
 
-const HOME_HERO_IMAGE_SRC = "/brand/autoninja/homepage-hero-ninja-leisure-v2.webp";
+const HOME_HERO_MASCOT_SRC = "/brand/autoninja/mascot-steering-wheel-hero-v1.webp";
 const TRANSPARENT_PIXEL_SRC =
   "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
 
@@ -123,7 +123,7 @@ export default async function HomePageShell() {
     },
   ] as const;
 
-  preload(HOME_HERO_IMAGE_SRC, {
+  preload(HOME_HERO_MASCOT_SRC, {
     as: "image",
     fetchPriority: "high",
     media: "(min-width: 640px)",
@@ -142,21 +142,25 @@ export default async function HomePageShell() {
           className="search-first border-b border-black/8 bg-[var(--home-soft-surface)]"
         >
           <div className="relative isolate overflow-hidden bg-[var(--home-brand)]">
-            <picture className="absolute inset-0 hidden sm:block">
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 bg-[radial-gradient(circle_at_80%_32%,rgba(244,91,0,0.24)_0%,rgba(0,92,51,0)_34%),linear-gradient(120deg,#061713_0%,#005c33_58%,#003d24_100%)]"
+            />
+            <picture className="pointer-events-none absolute bottom-[5.75rem] right-4 top-3 hidden w-[42%] sm:right-6 sm:block sm:w-[38%] lg:bottom-[6.75rem] lg:right-8 lg:top-4 lg:w-[36%]">
               <source
                 media="(min-width: 640px)"
-                srcSet={HOME_HERO_IMAGE_SRC}
+                srcSet={HOME_HERO_MASCOT_SRC}
                 type="image/webp"
               />
-              {/* The transparent fallback prevents the desktop hero from downloading on mobile. */}
+              {/* The transparent fallback prevents the desktop mascot from downloading on mobile. */}
               <img
                 src={TRANSPARENT_PIXEL_SRC}
                 alt=""
-                width={1672}
-                height={941}
+                width={948}
+                height={1659}
                 decoding="async"
                 fetchPriority="high"
-                className="h-full w-full object-cover object-[64%_center] lg:object-center"
+                className="h-full w-full object-contain object-center drop-shadow-[0_18px_28px_rgba(0,0,0,0.3)]"
               />
             </picture>
             <div
@@ -164,7 +168,7 @@ export default async function HomePageShell() {
               className="absolute inset-0 bg-[linear-gradient(90deg,rgba(5,23,20,0.96)_0%,rgba(5,23,20,0.82)_34%,rgba(5,23,20,0.28)_68%,rgba(5,23,20,0.04)_100%)] sm:bg-[linear-gradient(90deg,rgba(5,23,20,0.94)_0%,rgba(5,23,20,0.72)_38%,rgba(5,23,20,0.12)_72%,rgba(5,23,20,0.02)_100%)]"
             />
             <div className="relative mx-auto flex min-h-[21rem] max-w-7xl items-start px-4 pb-28 pt-8 sm:min-h-[24rem] sm:px-6 sm:pb-32 sm:pt-12 lg:min-h-[27rem] lg:pb-36 lg:pt-16">
-              <div className="max-w-[18rem] sm:max-w-lg lg:max-w-2xl">
+              <div className="max-w-[18rem] sm:max-w-md lg:max-w-[38rem]">
                 <h1
                   id="home-search-heading"
                   className="!text-[2rem] font-semibold tracking-[-0.025em] !text-white [text-wrap:balance] sm:!text-[2.75rem] lg:!text-[3.25rem]"

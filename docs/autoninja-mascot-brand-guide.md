@@ -2,21 +2,19 @@
 
 ## Current decision state
 
-The mascot's final production master and first homepage pose are awaiting
-approval from the August 2026 remake concepts. Until one concept is selected,
-generated characters and proposed brand patterns are previews only and must not
-replace production assets.
+The steering-wheel mascot is the approved production master and homepage pose.
+Proposed brand patterns remain previews until separately approved.
 
-The current homepage hero character is not an identity reference. It drifted
-from the established small leaning mascot and must not be used to generate new
-poses.
+The superseded angular-hood homepage hero character drifted from the established
+small leaning mascot and must not be used to generate new poses.
 
 ## Identity source of truth
 
 - Primary identity reference: `public/brand/autoninja/mascot-leaning-key-transparent.png`
 - Supporting face reference: `public/brand/autoninja/mascot-head.png`
-- Legacy proportion reference: `public/brand/autoninja/mascot-master.png`
-- Final character sheet: pending approval of the remake direction
+- Approved full-body master: `public/brand/autoninja/mascot-steering-wheel-hero-v1.png`
+- Production hero asset: `public/brand/autoninja/mascot-steering-wheel-hero-v1.webp`
+- Legacy proportion reference only: `public/brand/autoninja/mascot-master.png`
 
 Every future mascot graphic must include the approved final character sheet as
 an image reference. A text prompt by itself is not enough to preserve the
