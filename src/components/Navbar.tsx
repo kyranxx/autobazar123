@@ -450,7 +450,7 @@ export default function Navbar() {
               <Link
                 href={CREATE_LISTING_ROUTE}
                 prefetch={false}
-                className="hidden min-h-10 items-center gap-2 rounded-md border border-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-primary)] transition-colors hover:bg-[var(--color-primary)] hover:text-white lg:inline-flex"
+                className="hidden min-h-10 items-center gap-2 rounded-md bg-[var(--color-accent)] px-4 text-sm font-semibold text-[var(--color-accent-foreground)] transition-colors hover:bg-[var(--color-accent-hover)] lg:inline-flex"
                 onClick={safeNavigate(CREATE_LISTING_ROUTE)}
                 onKeyDown={safeKeyboardNavigate(CREATE_LISTING_ROUTE)}
               >
