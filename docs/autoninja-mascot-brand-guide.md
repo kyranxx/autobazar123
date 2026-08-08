@@ -41,8 +41,9 @@ because small errors compound from generation to generation.
 - The black hood beneath the headband must read as cloth rather than a helmet.
   Use only two to four broad overlapping fabric panels or seams; never cover the
   head in many narrow bandage-like wraps.
-- Plain black ninja or split-toe tabi boots. No sneakers, laces, white athletic
-  soles, or streetwear.
+- Plain one-piece matte-black rounded ninja ankle boots. Each boot has one
+  continuous closed toe box: no split toe, visible toes, sneakers, laces, white
+  athletic soles, or streetwear.
 - Calm, confident, helpful personality. No weapons or combat-led poses.
 - Every production pose must show an automotive action or object: for example a
   car key, steering wheel, tyre, wheel, pressure gauge, gearshift, diagnostic
@@ -89,7 +90,7 @@ with:
 > Preserve the exact AutoNinja mascot identity from the supplied approved
 > references: the same spherical matte-black head, rounded inset black visor,
 > friendly orange crescent eyes, compact soft 3D proportions, proper black
-> kimono, plain black tabi boots, original tied orange headband, original tied
+> kimono, plain one-piece black boots, original tied orange headband, original tied
 > orange belt, restrained broad cloth panels beneath the headband, and the
 > selected automotive prop. This must be the same character in a new pose, not a
 > reinterpretation or a generic ninja. Change only the requested pose, prop, or
@@ -98,10 +99,10 @@ with:
 Always finish with:
 
 > Do not remove or redesign the orange headband knot, its two short tails, the
-> tied orange belt, or its two short ends. No sneakers, laces, white soles,
-> smooth helmet shell, excessive narrow wraps, mummy wrapping, weapons, exposed
-> skin, realistic facial features, angry eyes, complicated armor, extra logos,
-> text, or watermark.
+> tied orange belt, or its two short ends. No split toes, visible toes, sneakers,
+> laces, white soles, smooth helmet shell, excessive narrow wraps, mummy
+> wrapping, weapons, exposed skin, realistic facial features, angry eyes,
+> complicated armor, extra logos, text, or watermark.
 
 ## Usage rules
 
