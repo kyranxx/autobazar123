@@ -21,18 +21,24 @@ describe("optimizeCloudflareImage", () => {
     expect(optimizeCloudflareImage(NON_CF_URL)).toBe(NON_CF_URL);
   });
 
-  it("adds default optimization params to Cloudflare URLs", () => {
+  it("replaces the named variant with Cloudflare flexible options", () => {
     const optimized = optimizeCloudflareImage(CF_URL);
 
-    expect(optimized).toContain("quality=80");
-    expect(optimized).toContain("format=auto");
-    expect(optimized).toContain("fit=scale-down");
+    expect(optimized).toBe(
+      "https://imagedelivery.net/account/image-id/quality=80,format=auto,fit=scale-down",
+    );
   });
 
-  it("appends params using '&' when URL already has a query string", () => {
+  it("removes obsolete query params instead of sending ignored options", () => {
     const optimized = optimizeCloudflareImage(`${CF_URL}?v=1`, { width: 640 });
-    expect(optimized).toContain("?v=1&");
-    expect(optimized).toContain("width=640");
+    expect(optimized).toBe(
+      "https://imagedelivery.net/account/image-id/width=640,quality=80,format=auto,fit=scale-down",
+    );
+  });
+
+  it("leaves signed Cloudflare URLs unchanged", () => {
+    const signedUrl = `${CF_URL}?exp=123&sig=signature`;
+    expect(optimizeCloudflareImage(signedUrl, { width: 640 })).toBe(signedUrl);
   });
 });
 
@@ -42,21 +48,21 @@ describe("responsive image helpers", () => {
     expect(srcSet).toContain("320w");
     expect(srcSet).toContain("640w");
     expect(srcSet).toContain("format=webp");
+    expect(srcSet).not.toContain("?");
   });
 
   it("builds thumbnail URL with cover crop and webp", () => {
     const thumbnail = getThumbnailUrl(CF_URL, "sm");
-    expect(thumbnail).toContain("width=200");
-    expect(thumbnail).toContain("height=200");
-    expect(thumbnail).toContain("fit=cover");
-    expect(thumbnail).toContain("format=webp");
+    expect(thumbnail).toContain(
+      "/width=200,height=200,quality=85,format=webp,fit=cover",
+    );
   });
 
   it("builds hero URL with banner dimensions", () => {
     const hero = getHeroImageUrl(CF_URL);
-    expect(hero).toContain("width=1920");
-    expect(hero).toContain("height=600");
-    expect(hero).toContain("fit=cover");
+    expect(hero).toContain(
+      "/width=1920,height=600,quality=85,format=webp,fit=cover",
+    );
   });
 });
 
@@ -68,7 +74,7 @@ describe("preloadImage", () => {
     expect(links.length).toBeGreaterThan(0);
 
     const link = links[links.length - 1] as HTMLLinkElement;
-    expect(link.getAttribute("href")).toContain("format=webp");
+    expect(link.getAttribute("href")).toContain("/quality=80,format=webp");
     expect(link.imageSrcset || link.getAttribute("imagesrcset")).toContain("320w");
     expect(link.imageSizes || link.getAttribute("imagesizes")).toContain("100vw");
   });

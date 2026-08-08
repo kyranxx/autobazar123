@@ -38,11 +38,23 @@ export async function uploadImageToCloudflare(file: File): Promise<string> {
     throw new Error("Upload failed");
   }
 
-  // Return the 'public' variant URL
-  // Cloudflare returns variants array. We'll pick the one ending in /public or just the first one if not found.
-  const variants = uploadResult.result.variants as string[];
-  const publicVariant =
-    variants.find((v) => v.endsWith("/public")) || variants[0];
+  const variants: string[] = Array.isArray(uploadResult.result?.variants)
+    ? (uploadResult.result.variants as unknown[]).filter(
+        (variant: unknown): variant is string =>
+          typeof variant === "string" && variant.length > 0,
+      )
+    : [];
 
-  return publicVariant;
+  if (variants.length === 0) {
+    throw new Error("Upload failed");
+  }
+
+  // Keep a stable, high-resolution base URL. Rendering helpers replace the
+  // named variant with Cloudflare flexible-variant options for each use case.
+  const preferredVariantNames = ["large", "medium", "public", "thumbnail"];
+  const preferredVariant = preferredVariantNames
+    .map((name) => variants.find((variant) => variant.endsWith(`/${name}`)))
+    .find((variant) => variant !== undefined);
+
+  return preferredVariant ?? variants[0];
 }

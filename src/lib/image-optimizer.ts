@@ -18,9 +18,18 @@ export function optimizeCloudflareImage(
   url: string,
   options: ImageOptions = {},
 ): string {
-  if (!url.includes("imagedelivery.net")) {
+  let parsedUrl: URL;
+
+  try {
+    parsedUrl = new URL(url);
+  } catch {
     return url;
   }
+
+  if (parsedUrl.hostname !== "imagedelivery.net") return url;
+
+  // Flexible variants cannot be combined with signed delivery URLs.
+  if (parsedUrl.searchParams.has("sig")) return url;
 
   const {
     width,
@@ -30,16 +39,23 @@ export function optimizeCloudflareImage(
     fit = "scale-down",
   } = options;
 
-  const params = new URLSearchParams();
+  const params: string[] = [];
 
-  if (width) params.append("width", width.toString());
-  if (height) params.append("height", height.toString());
-  params.append("quality", quality.toString());
-  params.append("format", format);
-  params.append("fit", fit);
+  if (width) params.push(`width=${width}`);
+  if (height) params.push(`height=${height}`);
+  params.push(`quality=${quality}`);
+  params.push(`format=${format}`);
+  params.push(`fit=${fit}`);
 
-  const separator = url.includes("?") ? "&" : "?";
-  return `${url}${separator}${params.toString()}`;
+  const pathSegments = parsedUrl.pathname.split("/");
+  if (pathSegments.length < 4 || !pathSegments.at(-1)) return url;
+
+  pathSegments[pathSegments.length - 1] = params.join(",");
+  parsedUrl.pathname = pathSegments.join("/");
+  parsedUrl.search = "";
+  parsedUrl.hash = "";
+
+  return parsedUrl.toString();
 }
 
 /**

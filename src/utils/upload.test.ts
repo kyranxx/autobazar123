@@ -14,7 +14,7 @@ describe("uploadImageToCloudflare", () => {
     vi.unstubAllGlobals();
   });
 
-  it("returns public variant URL when upload succeeds", async () => {
+  it("prefers the large variant regardless of response order", async () => {
     fetchMock
       .mockResolvedValueOnce(
         new Response(JSON.stringify({ uploadUrl: "https://upload.example.com" }), {
@@ -28,8 +28,9 @@ describe("uploadImageToCloudflare", () => {
             success: true,
             result: {
               variants: [
-                "https://imagedelivery.net/acct/id/private",
+                "https://imagedelivery.net/acct/id/medium",
                 "https://imagedelivery.net/acct/id/public",
+                "https://imagedelivery.net/acct/id/large",
               ],
             },
           }),
@@ -41,7 +42,7 @@ describe("uploadImageToCloudflare", () => {
       );
 
     const result = await uploadImageToCloudflare(file);
-    expect(result).toBe("https://imagedelivery.net/acct/id/public");
+    expect(result).toBe("https://imagedelivery.net/acct/id/large");
   });
 
   it("throws when upload URL request fails", async () => {
@@ -70,7 +71,7 @@ describe("uploadImageToCloudflare", () => {
     await expect(uploadImageToCloudflare(file)).rejects.toThrow("Upload failed");
   });
 
-  it("falls back to first variant when /public is missing", async () => {
+  it("falls back to the first valid variant when no preferred name exists", async () => {
     fetchMock
       .mockResolvedValueOnce(
         new Response(JSON.stringify({ uploadUrl: "https://upload.example.com" }), {
@@ -95,5 +96,26 @@ describe("uploadImageToCloudflare", () => {
 
     const result = await uploadImageToCloudflare(file);
     expect(result).toBe("https://imagedelivery.net/acct/id/original");
+  });
+
+  it("throws when a successful response has no usable variants", async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ uploadUrl: "https://upload.example.com" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ success: true, result: { variants: [] } }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
+      );
+
+    await expect(uploadImageToCloudflare(file)).rejects.toThrow("Upload failed");
   });
 });
