@@ -26,6 +26,8 @@ function ThemePreviewShellContent({
         "--color-accent-hover": BRAND_THEME.accentHover,
         "--color-accent-foreground": BRAND_THEME.accentForeground,
         "--color-accent-subtle": BRAND_THEME.accentSubtle,
+        "--color-accent-text": BRAND_THEME.accentText,
+        "--color-accent-text-hover": BRAND_THEME.accentTextHover,
         "--color-digital": HOME_THEME.link,
         "--color-digital-subtle": withAlpha(HOME_THEME.link, 0.18),
         "--color-success": BRAND_THEME.success,

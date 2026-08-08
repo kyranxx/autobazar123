@@ -1,59 +1,97 @@
 # AutoNinja mascot continuity guide
 
-## Source of truth
+## Current decision state
 
-- Master reference board: `public/brand/autoninja/mascot-reference-board.png`
-- Reusable full-body mascot: `public/brand/autoninja/mascot-master.png`
-- Compact logo head: `public/brand/autoninja/mascot-head.png`
+The mascot's permanent costume signature is awaiting approval from the August
+2026 remake concepts. Until one concept is selected, generated characters are
+previews only and must not replace production mascot assets.
 
-Every future mascot graphic must use the reference board or one of the approved
-transparent masters as an image reference. A text prompt by itself is not enough
-to preserve the character.
+The current homepage hero character is not an identity reference. It drifted
+from the established small leaning mascot and must not be used to generate new
+poses.
 
-## Character invariants
+## Identity source of truth
 
-- Rounded, compact body with an oversized rounded hooded head.
-- Matte black and deep-charcoal ninja clothing with soft polished 3D rendering.
-- Wide black face visor framed by the hood.
-- Friendly curved orange eyes; the default expression is calm and smiling.
-- Vivid orange headband with two short tied tails on the character's left.
-- White geometric `A` chest mark with a small orange lower triangle.
-- Relaxed, confident, helpful personality; never aggressive or weapon-led.
-- Orange is the dominant action accent. Dark green remains the platform's
-  structural color. White, black, and charcoal carry most surfaces and type.
-  Mint appears only as a small positive or technical highlight.
+- Primary identity reference: `public/brand/autoninja/mascot-leaning-key-transparent.png`
+- Supporting face reference: `public/brand/autoninja/mascot-head.png`
+- Legacy proportion reference: `public/brand/autoninja/mascot-master.png`
+- Final character sheet: pending approval of the remake direction
+
+Every future mascot graphic must include the approved final character sheet as
+an image reference. A text prompt by itself is not enough to preserve the
+character. Do not use a previously generated scene as the only reference,
+because small errors compound from generation to generation.
+
+## Locked character invariants
+
+- Oversized, nearly spherical matte-black head with the same rounded silhouette
+  and head-to-body ratio as the primary leaning reference.
+- Wide glossy-black visor face with the same outline, inset depth, and placement.
+- Two simple friendly orange crescent eyes. No pupils, mouth, nose, eyebrows, or
+  exposed human skin.
+- Compact, friendly body with soft premium 3D toy rendering and matte-black
+  materials. Never tall, athletic, muscular, realistic, or aggressive.
+- Proper simple black kimono jacket with a visible crossover collar, relaxed
+  black trousers, and an orange waist detail.
+- Plain black ninja or split-toe tabi boots. No sneakers, laces, white athletic
+  soles, or streetwear.
+- Calm, confident, helpful personality. No weapons or combat-led poses.
+- No loose head wrapping, bandana knot, scarf, ribbons, or flying fabric tails.
+- The final selected head/collar signature must be copied exactly in every pose.
 
 ## Approved palette
 
-- Ninja orange: `#F45B00` for accessible UI controls and `#FE6800` in rendered
-  mascot artwork where the reference lighting calls for the brighter tone.
-- Orange hover: `#E85A00`
+- Ninja orange: `#F45B00`
+- Orange interaction hover: `#E85A00`
 - Ninja black: `#111317`
 - Platform dark green: `#005C33`
-- Dark-green hover: `#004726`
+- Dark-green interaction hover: `#004726`
 - White: `#FFFFFF`
 - Mint highlight: `#49E698`
 
+Use `#F45B00` as the base orange material in both UI and generated artwork.
+Normal highlights and shadows from 3D lighting are acceptable, but do not
+substitute a darker orange solely to satisfy a contrast score. Orange UI text,
+logos, and accents must resolve to the shared brand tokens in
+`src/config/theme-brand.json`.
+
+## Production generation workflow
+
+1. Start from the approved final character sheet, never from text alone.
+2. Add the primary leaning identity reference when the face or proportions are
+   especially important.
+3. State that both images are strict identity references, then describe only the
+   new pose, prop, expression, or scene.
+4. Repeat every invariant and the negative list in the prompt. Request one pose
+   per generation so the model does not average several designs together.
+5. Compare the result with the final sheet at the same head size. Reject it if
+   the head outline, visor shape, eye spacing, body ratio, kimono, footwear, or
+   selected signature changes.
+6. Save only approved cutouts as versioned masters. Do not make a rejected scene
+   part of the reference chain.
+
 ## Reusable generation prompt
 
-Use the master reference image and begin with:
+Use the final character sheet and the leaning identity reference, then begin
+with:
 
-> Preserve the exact AutoNinja mascot identity from the supplied reference:
-> rounded proportions, black hood and outfit, orange headband and belt, black
-> face visor, friendly curved orange eyes, white-and-orange A chest emblem,
-> polished soft 3D illustration finish, and relaxed helpful personality. This
-> must be the same character, not a generic ninja or a redesign.
+> Preserve the exact AutoNinja mascot identity from the supplied approved
+> references: the same spherical matte-black head, rounded inset black visor,
+> friendly orange crescent eyes, compact soft 3D proportions, proper black
+> kimono, plain black tabi boots, orange waist detail, and the selected signature
+> feature. This must be the same character in a new pose, not a reinterpretation
+> or a generic ninja. Change only the requested pose, prop, or environment.
 
-Then describe only the new pose, prop, expression, or scene. Repeat the
-invariants in every edit and request one change per iteration.
+Always finish with:
+
+> No sneakers, laces, white soles, loose head wraps, bandana knots, scarf tails,
+> weapons, exposed skin, realistic facial features, angry eyes, complicated
+> armor, extra logos, text, or watermark.
 
 ## Usage rules
 
-- Use the head icon at small sizes; do not shrink the full-body mascot into an icon.
-- Keep clear space around the headband tails and hood silhouette.
-- Do not add weapons, photorealistic human features, exposed skin, or a mouth
-  outside the visor's expression system.
-- Do not recolor the headband, eyes, or belt away from orange.
-- Avoid placing the mascot over visually busy vehicle details.
+- Use the head icon at small sizes; do not shrink a full-body scene into an icon.
+- Keep clear space around the round hood and preserve the visor silhouette.
+- Avoid placing the face over visually busy vehicle details.
 - Use empty alt text when the mascot is decorative. Use concise descriptive alt
   text only when the mascot conveys unique information.

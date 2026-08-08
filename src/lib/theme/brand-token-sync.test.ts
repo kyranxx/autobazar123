@@ -22,6 +22,8 @@ describe("brand theme token sync", () => {
     expect(BRAND_THEME.accent).toBe("#F45B00");
     expect(BRAND_THEME.accentHover).toBe("#E85A00");
     expect(BRAND_THEME.accentForeground).toBe("#111317");
+    expect(BRAND_THEME.accentText).toBe(BRAND_THEME.accent);
+    expect(BRAND_THEME.accentTextHover).toBe(BRAND_THEME.accentHover);
   });
 
   it("keeps the shared TypeScript theme aligned with global CSS tokens", () => {
@@ -37,6 +39,10 @@ describe("brand theme token sync", () => {
     );
     expect(getHexToken("--color-accent-subtle")).toBe(
       BRAND_THEME.accentSubtle.toLowerCase(),
+    );
+    expect(getHexToken("--color-accent-text")).toBe(BRAND_THEME.accentText.toLowerCase());
+    expect(getHexToken("--color-accent-text-hover")).toBe(
+      BRAND_THEME.accentTextHover.toLowerCase(),
     );
     expect(getHexToken("--color-background-muted")).toBe(BRAND_THEME.softSurface.toLowerCase());
     expect(getHexToken("--color-success")).toBe(BRAND_THEME.success.toLowerCase());

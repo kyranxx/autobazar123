@@ -40,8 +40,8 @@
   --color-accent-hover: #E85A00;
   --color-accent-foreground: #111317;
   --color-accent-subtle: #FFF0E6;
-  --color-accent-text: #A33D00;
-  --color-accent-text-hover: #843100;
+  --color-accent-text: #F45B00;
+  --color-accent-text-hover: #E85A00;
 
   /* Mint accent (fresh highlight tone) */
   --color-mint: #78F0B0;
@@ -1099,24 +1099,25 @@ textarea:disabled,
   --color-accent-hover: #E85A00 !important;
   --color-accent-foreground: #111317 !important;
   --color-accent-subtle: #FFF0E6 !important;
-  --color-accent-text: #A33D00 !important;
-  --color-accent-text-hover: #843100 !important;
+  --color-accent-text: #F45B00 !important;
+  --color-accent-text-hover: #E85A00 !important;
   --color-digital: #005c33 !important;
 }
 
-/* Bright orange uses black control text; darker orange preserves text-link contrast. */
+/* Brand fidelity takes precedence for orange labels and links.
+   Do not replace the approved orange with a contrast-only dark substitute. */
 .text-accent {
-  color: var(--color-accent-text) !important;
+  color: var(--color-accent) !important;
 }
 
 .hover\:text-accent:hover,
 .focus\:text-accent:focus,
 .focus-visible\:text-accent:focus-visible {
-  color: var(--color-accent-text-hover) !important;
+  color: var(--color-accent) !important;
 }
 
 .group:hover .group-hover\:text-accent {
-  color: var(--color-accent-text-hover) !important;
+  color: var(--color-accent) !important;
 }
 
 .bg-accent,
